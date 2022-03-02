@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::app::AppExit;
 use bevy_prototype_lyon::prelude::*;
 
 
@@ -10,6 +11,7 @@ fn main() {
     .add_plugins(DefaultPlugins)
     .add_plugin(ShapePlugin)
     .add_system(movement)
+    .add_system(quit)
     .run();
 }
 
@@ -69,5 +71,11 @@ fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<&mut Trans
         if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
             transform.translation.y += 3.;
         }
+    }
+}
+
+fn quit(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
+    if keyboard_input.pressed(KeyCode::LWin) && keyboard_input.pressed(KeyCode::W) {
+        exit.send(AppExit);
     }
 }
