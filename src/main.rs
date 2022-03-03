@@ -47,7 +47,10 @@ fn create_player(mut commands: Commands) {
             FillMode::color(Color::YELLOW),
             // outline_mode: StrokeMode::new(Color::BLACK, 5.0),
         ),
-        Transform::default(),
+        Transform {
+            translation: Vec3::new(0.0, 0.0, 1.0),
+            ..Default::default()
+        },
     )).insert(Player);
 }
 
