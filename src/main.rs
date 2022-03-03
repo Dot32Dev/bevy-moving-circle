@@ -11,7 +11,7 @@ fn main() {
     .add_plugins(DefaultPlugins)
     .add_plugin(ShapePlugin)
     .add_system(movement)
-    .add_system(quit)
+    .add_system(quit).add_system(mouse_button_input)
     .run();
 }
 
@@ -79,3 +79,67 @@ fn quit(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
         exit.send(AppExit);
     }
 }
+
+#[derive(Component)]
+struct Bullet;
+
+fn mouse_button_input(buttons: Res<Input<MouseButton>>, windows: Res<Windows>, mut commands: Commands) {
+    if buttons.just_pressed(MouseButton::Left) {
+        let window = windows.get_primary().unwrap();
+        if let Some(_position) = window.cursor_position() {
+            // println!("{:?}", window.cursor_position());
+            match Some(_position) {
+                Some(vec) => {
+                    // let window_size = (window.width(), window.height());
+                    println!("x{}, y{}", vec.x, vec.y);
+                    let shape = shapes::RegularPolygon {
+                        sides: 30,
+                        feature: shapes::RegularPolygonFeature::Radius(10.0),
+                        ..shapes::RegularPolygon::default()
+                    };
+                    commands.spawn_bundle(GeometryBuilder::build_as(
+                        &shape,
+                        DrawMode::Fill (
+                            FillMode::color(Color::ORANGE),
+                        ),
+                        Transform {
+                            translation: Vec3::new(vec.x-window.width()/2.0, vec.y-window.height()/2.0, 0.0),
+                            ..Default::default()
+                        },
+                    )).insert(Bullet);
+
+                },
+                None => println!("Cursor outside of screen, but screen is still in focus?"),
+            }
+        }
+    }
+}
+
+// fn create_player(mut commands: Commands) {
+//     let shape = shapes::RegularPolygon {
+//         sides: 30,
+//         feature: shapes::RegularPolygonFeature::Radius(30.0),
+//         ..shapes::RegularPolygon::default()
+//     };
+
+//     // commands.spawn_bundle(SpriteBundle {
+//     //     sprite: Sprite {
+//     //         color: Color::rgb(0.7, 0.7, 0.7),
+//     //         ..Default::default()
+//     //     },
+//     //     transform: Transform {
+//     //         scale: Vec3::new(30.0, 30.0, 30.0),
+//     //         ..Default::default()
+//     //     },
+//     //     ..Default::default()
+//     // }).insert(Player);
+
+//     commands.spawn_bundle(GeometryBuilder::build_as(
+//         &shape,
+//         DrawMode::Fill (
+//             FillMode::color(Color::YELLOW),
+//             // outline_mode: StrokeMode::new(Color::BLACK, 5.0),
+//         ),
+//         Transform::default(),
+//     )).insert(Player);
+// }
