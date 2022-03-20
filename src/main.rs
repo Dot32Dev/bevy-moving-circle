@@ -13,7 +13,8 @@ fn main() {
     .add_plugin(ShapePlugin)
     .add_system(movement)
     .add_system(update_bullets)
-    .add_system(quit).add_system(mouse_button_input)
+    .add_system(quit_and_resize)
+    .add_system(mouse_button_input)
     .run();
 }
 
@@ -80,14 +81,34 @@ fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<&mut Trans
     }
 }
 
-fn quit(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>, mut windows: ResMut<Windows>,) {
+fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>, mut windows: ResMut<Windows>,) {
     let window = windows.get_primary_mut().unwrap();
-    if env::consts::OS == "macos" && keyboard_input.pressed(KeyCode::LWin) && keyboard_input.just_pressed(KeyCode::W) {
-        exit.send(AppExit);
-        window.set_mode(WindowMode::Windowed);
+
+    if env::consts::OS == "macos" {
+        if keyboard_input.pressed(KeyCode::LWin) && keyboard_input.just_pressed(KeyCode::W) {
+            exit.send(AppExit);
+            window.set_mode(WindowMode::Windowed);
+        }
+        if keyboard_input.pressed(KeyCode::LWin) && keyboard_input.pressed(KeyCode::LControl) && keyboard_input.just_pressed(KeyCode::F) {
+            println!("{:?}", window.mode());
+            if window.mode() == WindowMode::Windowed {
+                window.set_mode(WindowMode::BorderlessFullscreen);
+            } else if window.mode() == WindowMode::BorderlessFullscreen {
+                window.set_mode(WindowMode::Windowed);
+            }
+        }
     }
-    if env::consts::OS == "windows" && keyboard_input.pressed(KeyCode::LControl) && keyboard_input.just_pressed(KeyCode::W) {
-        exit.send(AppExit);
+    if env::consts::OS == "windows" {
+        // if keyboard_input.pressed(KeyCode::LControl) && keyboard_input.just_pressed(KeyCode::W) {
+        //     exit.send(AppExit);
+        // }
+        if keyboard_input.just_pressed(KeyCode::F11) {
+            if window.mode() == WindowMode::Windowed {
+                window.set_mode(WindowMode::BorderlessFullscreen);
+            } else if window.mode() == WindowMode::BorderlessFullscreen {
+                window.set_mode(WindowMode::Windowed);
+            }
+        }
     }
 }
 
