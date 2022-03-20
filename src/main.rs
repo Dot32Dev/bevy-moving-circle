@@ -86,33 +86,49 @@ fn quit(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
 #[derive(Component)]
 struct Bullet;
 
-fn mouse_button_input(buttons: Res<Input<MouseButton>>, windows: Res<Windows>, mut commands: Commands) {
+#[derive(Component)]
+struct Direction {
+    // x: f32,
+    // y: f32,
+    dir: Vec2,
+}
+
+fn mouse_button_input(
+    buttons: Res<Input<MouseButton>>, 
+    windows: Res<Windows>, 
+    mut commands: Commands,
+    mut positions: Query<&mut Transform, With<Player>>,
+) {
     if buttons.just_pressed(MouseButton::Left) {
         let window = windows.get_primary().unwrap();
         if let Some(_position) = window.cursor_position() {
             // println!("{:?}", window.cursor_position());
             match Some(_position) {
                 Some(vec) => {
-                    // let window_size = (window.width(), window.height());
-                    println!("x{}, y{}", vec.x, vec.y);
-                    let shape = shapes::RegularPolygon {
-                        sides: 30,
-                        feature: shapes::RegularPolygonFeature::Radius(10.0),
-                        ..shapes::RegularPolygon::default()
-                    };
-                    commands.spawn_bundle(GeometryBuilder::build_as(
-                        &shape,
-                        DrawMode::Fill (
-                            FillMode::color(Color::ORANGE),
-                        ),
-                        Transform {
-                            translation: Vec3::new(vec.x-window.width()/2.0, vec.y-window.height()/2.0, 0.0),
-                            ..Default::default()
-                        },
-                    )).insert(Bullet);
+                    for mut player in positions.iter_mut() {
+                        // let window_size = (window.width(), window.height());
+                        println!("x{}, y{}", vec.x, vec.y);
+                        let shape = shapes::RegularPolygon {
+                            sides: 30,
+                            feature: shapes::RegularPolygonFeature::Radius(10.0),
+                            ..shapes::RegularPolygon::default()
+                        };
+                        commands.spawn_bundle(GeometryBuilder::build_as(
+                            &shape,
+                            DrawMode::Fill (
+                                FillMode::color(Color::ORANGE),
+                            ),
+                            Transform {
+                                translation: Vec3::new(vec.x-window.width()/2.0, vec.y-window.height()/2.0, 0.0),
+                                ..Default::default()
+                            },
+                        )).insert(Bullet)
+                        // .insert(Direction { x: vec.x - player.translation.x, y: vec.y - player.translation.y });
+                        .insert(Direction { dir: Vec2::new(vec.x - player.translation.x, vec.y - player.translation.y).normalize() });
+                    }
 
                 },
-                None => println!("Cursor outside of screen, but screen is still in focus?"),
+                None => println!("Cursor outside of screen, but window is still in focus?"),
             }
         }
     }
