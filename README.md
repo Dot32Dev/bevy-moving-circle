@@ -9,3 +9,9 @@ Now you can click to spawn orange cicles lmao
 
 (intense action packed gameplay)
 how fast can you lag your computer from too many circles 😎
+
+-------
+
+Proper shooting now implemented: found out how to spawn entities with components that hold values, bullets now store their direction when placed and have an update system to move them every frame.
+
+![shooting2](https://user-images.githubusercontent.com/61964090/159148223-90061417-b1b5-4fef-841b-68e9f3a1c8c1.gif)
