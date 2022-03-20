@@ -1,7 +1,8 @@
 use bevy::prelude::*;
+use bevy::window::*;
 use bevy::app::AppExit;
 use bevy_prototype_lyon::prelude::*;
-
+use std::env;
 
 fn main() {
     App::new()
@@ -18,6 +19,7 @@ fn main() {
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    println!("{}", env::consts::OS); // Prints the current OS.
 }
 
 #[derive(Component)]
@@ -78,8 +80,13 @@ fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<&mut Trans
     }
 }
 
-fn quit(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
-    if keyboard_input.pressed(KeyCode::LWin) && keyboard_input.pressed(KeyCode::W) {
+fn quit(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>, mut windows: ResMut<Windows>,) {
+    let window = windows.get_primary_mut().unwrap();
+    if env::consts::OS == "macos" && keyboard_input.pressed(KeyCode::LWin) && keyboard_input.just_pressed(KeyCode::W) {
+        exit.send(AppExit);
+        window.set_mode(WindowMode::Windowed);
+    }
+    if env::consts::OS == "windows" && keyboard_input.pressed(KeyCode::LControl) && keyboard_input.just_pressed(KeyCode::W) {
         exit.send(AppExit);
     }
 }
