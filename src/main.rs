@@ -11,6 +11,7 @@ fn main() {
     .add_plugins(DefaultPlugins)
     .add_plugin(ShapePlugin)
     .add_system(movement)
+    .add_system(update_bullets)
     .add_system(quit).add_system(mouse_button_input)
     .run();
 }
@@ -105,7 +106,7 @@ fn mouse_button_input(
             // println!("{:?}", window.cursor_position());
             match Some(_position) {
                 Some(vec) => {
-                    for mut player in positions.iter_mut() {
+                    for player in positions.iter_mut() {
                         // let window_size = (window.width(), window.height());
                         println!("x{}, y{}", vec.x, vec.y);
                         let shape = shapes::RegularPolygon {
@@ -119,18 +120,26 @@ fn mouse_button_input(
                                 FillMode::color(Color::ORANGE),
                             ),
                             Transform {
-                                translation: Vec3::new(vec.x-window.width()/2.0, vec.y-window.height()/2.0, 0.0),
+                                // translation: Vec3::new(vec.x-window.width()/2.0, vec.y-window.height()/2.0, 0.0),
+                                translation: Vec3::new(player.translation.x, player.translation.y, 0.0),
                                 ..Default::default()
                             },
                         )).insert(Bullet)
                         // .insert(Direction { x: vec.x - player.translation.x, y: vec.y - player.translation.y });
-                        .insert(Direction { dir: Vec2::new(vec.x - player.translation.x, vec.y - player.translation.y).normalize() });
+                        .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
                     }
 
                 },
                 None => println!("Cursor outside of screen, but window is still in focus?"),
             }
         }
+    }
+}
+
+fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>,) {
+    for (mut transform, direction) in bullets.iter_mut() {
+        transform.translation.x += direction.dir.x*10.;
+        transform.translation.y += direction.dir.y*10.;
     }
 }
 
