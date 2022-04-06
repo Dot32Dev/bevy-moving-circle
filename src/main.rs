@@ -1,8 +1,12 @@
 use bevy::prelude::*;
 use bevy::window::*;
 use bevy::app::AppExit;
+use bevy::core::FixedTimestep;
+
 use bevy_prototype_lyon::prelude::*;
 use std::env;
+
+const TIME_STEP: f32 = 1.0 / 120.0;
 
 fn main() {
     App::new()
@@ -11,10 +15,14 @@ fn main() {
     .add_startup_system(create_player)
     .add_plugins(DefaultPlugins)
     .add_plugin(ShapePlugin)
-    .add_system(movement)
-    .add_system(update_bullets)
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
+    .add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
+                .with_system(update_bullets)
+                .with_system(movement)
+        )
     .run();
 }
 
