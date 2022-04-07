@@ -17,6 +17,7 @@ fn main() {
     .add_plugin(ShapePlugin)
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
+    .add_system(rotate_turret)
     .add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
@@ -34,36 +35,43 @@ fn setup_camera(mut commands: Commands) {
 #[derive(Component)]
 struct Player;
 
+#[derive(Component)]
+struct Turret;
+
 fn create_player(mut commands: Commands) {
     let shape = shapes::RegularPolygon {
         sides: 30,
-        feature: shapes::RegularPolygonFeature::Radius(30.0),
+        feature: shapes::RegularPolygonFeature::Radius(18.0),
         ..shapes::RegularPolygon::default()
     };
 
-    // commands.spawn_bundle(SpriteBundle {
-    //     sprite: Sprite {
-    //         color: Color::rgb(0.7, 0.7, 0.7),
-    //         ..Default::default()
-    //     },
-    //     transform: Transform {
-    //         scale: Vec3::new(30.0, 30.0, 30.0),
-    //         ..Default::default()
-    //     },
-    //     ..Default::default()
-    // }).insert(Player);
-
     commands.spawn_bundle(GeometryBuilder::build_as(
         &shape,
-        DrawMode::Fill (
-            FillMode::color(Color::YELLOW),
-            // outline_mode: StrokeMode::new(Color::BLACK, 5.0),
-        ),
+        DrawMode::Outlined {
+            fill_mode: FillMode::color(Color::rgb(0.35, 0.6, 0.99)),
+            outline_mode: StrokeMode::new(Color::BLACK, 4.0),
+        },
         Transform {
             translation: Vec3::new(0.0, 0.0, 1.0),
             ..Default::default()
         },
-    )).insert(Player);
+    ))
+    .insert(Player)
+    .with_children(|parent| {
+            // child cube
+            parent.spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0., 0., 0.),
+                    ..Default::default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(16.0, 16.0, 0.),
+                    translation: Vec3::new(24.0, 0.0, -1.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            }).insert(Turret);
+        });
 }
 
 // fn movement(mut positions: Query<(&Player, &mut Transform)>) {
@@ -147,13 +155,13 @@ fn mouse_button_input(
                         println!("x{}, y{}", vec.x, vec.y);
                         let shape = shapes::RegularPolygon {
                             sides: 30,
-                            feature: shapes::RegularPolygonFeature::Radius(10.0),
+                            feature: shapes::RegularPolygonFeature::Radius(6.0),
                             ..shapes::RegularPolygon::default()
                         };
                         commands.spawn_bundle(GeometryBuilder::build_as(
                             &shape,
                             DrawMode::Fill (
-                                FillMode::color(Color::ORANGE),
+                                FillMode::color(Color::BLACK),
                             ),
                             Transform {
                                 // translation: Vec3::new(vec.x-window.width()/2.0, vec.y-window.height()/2.0, 0.0),
@@ -179,31 +187,19 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
     }
 }
 
-// fn create_player(mut commands: Commands) {
-//     let shape = shapes::RegularPolygon {
-//         sides: 30,
-//         feature: shapes::RegularPolygonFeature::Radius(30.0),
-//         ..shapes::RegularPolygon::default()
-//     };
+fn rotate_turret(mut turrets: Query<&mut Transform, With<Player>>, time: Res<Time>) {
+    for mut transform in turrets.iter_mut() {
+        // transform.translation.x = 0.;
+        // transform.translation.y = 0.;
+        transform.rotation = Quat::from_rotation_z(time.seconds_since_startup() as f32);
+        // transform.translation.x = 60.; //20
+        // transform.rotate(Quat::from_rotation_z(time.delta_seconds()));
 
-//     // commands.spawn_bundle(SpriteBundle {
-//     //     sprite: Sprite {
-//     //         color: Color::rgb(0.7, 0.7, 0.7),
-//     //         ..Default::default()
-//     //     },
-//     //     transform: Transform {
-//     //         scale: Vec3::new(30.0, 30.0, 30.0),
-//     //         ..Default::default()
-//     //     },
-//     //     ..Default::default()
-//     // }).insert(Player);
+        // transform.set identity
+        // transform.translate(,,,)
+        // transform.scale(...)
+        // transform.rotate(...)
+        // transform.translate(...)
 
-//     commands.spawn_bundle(GeometryBuilder::build_as(
-//         &shape,
-//         DrawMode::Fill (
-//             FillMode::color(Color::YELLOW),
-//             // outline_mode: StrokeMode::new(Color::BLACK, 5.0),
-//         ),
-//         Transform::default(),
-//     )).insert(Player);
-// }
+    }
+}
