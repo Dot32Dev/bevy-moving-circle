@@ -18,6 +18,6 @@ Proper shooting now implemented: found out how to spawn entities with components
 
 -------
 
-Nicer colours, fixed uodate, and a rotating turret that faces the player!
+Nicer colours, fixed update, and a rotating turret that faces the player!
 
 ![ezgif-3-4c43aa534a](https://user-images.githubusercontent.com/61964090/162556963-b89d8634-231e-4d81-9646-fe7e940326c1.gif)
