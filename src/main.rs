@@ -7,6 +7,8 @@ use bevy_prototype_lyon::prelude::*;
 use std::env;
 
 const TIME_STEP: f32 = 1.0 / 120.0;
+const WINDOW_W: f32 = 800.0;
+const WINDOW_H: f32 = 600.0;
 
 fn main() {
     App::new()
@@ -14,8 +16,8 @@ fn main() {
     // .insert_resource(Msaa { samples: 4 })
     .insert_resource(WindowDescriptor {
             title: "Tiny Tank (bevy edition)".to_string(),
-            width: 800.,
-            height: 600.,
+            width: WINDOW_W,
+            height: WINDOW_H,
             vsync: true,
             ..Default::default()
         })
@@ -25,6 +27,7 @@ fn main() {
     .add_plugin(ShapePlugin)
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
+    .add_system(kill_bullets)
     .add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
@@ -191,5 +194,13 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
     for (mut transform, direction) in bullets.iter_mut() {
         transform.translation.x += direction.dir.x*10.;
         transform.translation.y += direction.dir.y*10.;
+    }
+}
+
+fn kill_bullets(mut commands: Commands, mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,) {
+    for ((mut transform, bullet_entity), _bullet) in bullets.iter_mut() {
+        if transform.translation.x.abs() > WINDOW_W/2. || transform.translation.y.abs() > WINDOW_H/2. { 
+            commands.entity(bullet_entity).despawn(); 
+        }
     }
 }
