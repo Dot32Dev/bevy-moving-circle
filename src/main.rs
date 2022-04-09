@@ -12,12 +12,19 @@ fn main() {
     App::new()
     .add_startup_system(setup_camera)
     // .insert_resource(Msaa { samples: 4 })
+    .insert_resource(WindowDescriptor {
+            title: "Tiny Tank (bevy edition)".to_string(),
+            width: 800.,
+            height: 600.,
+            vsync: true,
+            ..Default::default()
+        })
+    .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .add_startup_system(create_player)
     .add_plugins(DefaultPlugins)
     .add_plugin(ShapePlugin)
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
-    .add_system(rotate_turret)
     .add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
@@ -74,14 +81,10 @@ fn create_player(mut commands: Commands) {
         });
 }
 
-// fn movement(mut positions: Query<(&Player, &mut Transform)>) {
-//     for (_head, mut transform) in positions.iter_mut() {
-//         transform.translation.x += 2.;
-//     }
-// }
-
 fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<&mut Transform, With<Player>>,) {
     for mut transform in positions.iter_mut() {
+        // transform.rotation = Quat::from_rotation_z(time.seconds_since_startup() as f32);
+
         if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
             transform.translation.x -= 3.;
         }
@@ -144,14 +147,18 @@ fn mouse_button_input(
     mut commands: Commands,
     mut positions: Query<&mut Transform, With<Player>>,
 ) {
-    if buttons.just_pressed(MouseButton::Left) {
-        let window = windows.get_primary().unwrap();
-        if let Some(_position) = window.cursor_position() {
-            // println!("{:?}", window.cursor_position());
-            match Some(_position) {
-                Some(vec) => {
-                    for player in positions.iter_mut() {
-                        // let window_size = (window.width(), window.height());
+    let window = windows.get_primary().unwrap();
+    if let Some(_position) = window.cursor_position() {
+        // println!("{:?}", window.cursor_position());
+        match Some(_position) {
+            Some(vec) => {
+                for mut player in positions.iter_mut() {
+                    // let window_size = (window.width(), window.height());
+                    let diff = Vec3::new(vec.x - window.width()/2.0, vec.y - window.height()/2.0, 0.) - player.translation;
+                    let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
+                    player.rotation = Quat::from_rotation_z(angle);
+
+                    if buttons.just_pressed(MouseButton::Left) {
                         println!("x{}, y{}", vec.x, vec.y);
                         let shape = shapes::RegularPolygon {
                             sides: 30,
@@ -172,10 +179,10 @@ fn mouse_button_input(
                         // .insert(Direction { x: vec.x - player.translation.x, y: vec.y - player.translation.y });
                         .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
                     }
+                }
 
-                },
-                None => println!("Cursor outside of screen, but window is still in focus?"),
-            }
+            },
+            None => println!("Cursor outside of screen, but window is still in focus?"),
         }
     }
 }
@@ -184,22 +191,5 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
     for (mut transform, direction) in bullets.iter_mut() {
         transform.translation.x += direction.dir.x*10.;
         transform.translation.y += direction.dir.y*10.;
-    }
-}
-
-fn rotate_turret(mut turrets: Query<&mut Transform, With<Player>>, time: Res<Time>) {
-    for mut transform in turrets.iter_mut() {
-        // transform.translation.x = 0.;
-        // transform.translation.y = 0.;
-        transform.rotation = Quat::from_rotation_z(time.seconds_since_startup() as f32);
-        // transform.translation.x = 60.; //20
-        // transform.rotate(Quat::from_rotation_z(time.delta_seconds()));
-
-        // transform.set identity
-        // transform.translate(,,,)
-        // transform.scale(...)
-        // transform.rotate(...)
-        // transform.translate(...)
-
     }
 }
