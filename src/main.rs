@@ -1,14 +1,12 @@
 use bevy::prelude::*;
 use bevy::window::*;
-use bevy::app::AppExit;
+use bevy::app::AppExit; // For MacOS CMD+W to quit keybind
 use bevy::core::FixedTimestep;
 
-use bevy_prototype_lyon::prelude::*;
-use std::env;
+use bevy_prototype_lyon::prelude::*; // Draw circles with ease
+use std::env; // Detect OS for OS specific keybinds
 
 const TIME_STEP: f32 = 1.0 / 120.0;
-const WINDOW_W: f32 = 800.0;
-const WINDOW_H: f32 = 600.0;
 
 fn main() {
     App::new()
@@ -16,8 +14,8 @@ fn main() {
     // .insert_resource(Msaa { samples: 4 })
     .insert_resource(WindowDescriptor {
             title: "Tiny Tank (bevy edition)".to_string(),
-            width: WINDOW_W,
-            height: WINDOW_H,
+            width: 800.,
+            height: 600.,
             vsync: true,
             ..Default::default()
         })
@@ -49,7 +47,7 @@ struct Player;
 struct Turret;
 
 fn create_player(mut commands: Commands) {
-    let shape = shapes::RegularPolygon {
+    let shape = shapes::RegularPolygon { // Define circle
         sides: 30,
         feature: shapes::RegularPolygonFeature::Radius(18.0),
         ..shapes::RegularPolygon::default()
@@ -67,8 +65,7 @@ fn create_player(mut commands: Commands) {
         },
     ))
     .insert(Player)
-    .with_children(|parent| {
-            // child cube
+    .with_children(|parent| { // Add turret to player
             parent.spawn_bundle(SpriteBundle {
                 sprite: Sprite {
                     color: Color::rgb(0., 0., 0.),
@@ -86,8 +83,6 @@ fn create_player(mut commands: Commands) {
 
 fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<&mut Transform, With<Player>>,) {
     for mut transform in positions.iter_mut() {
-        // transform.rotation = Quat::from_rotation_z(time.seconds_since_startup() as f32);
-
         if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
             transform.translation.x -= 3.;
         }
@@ -121,9 +116,6 @@ fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<Ap
         }
     }
     if env::consts::OS == "windows" {
-        // if keyboard_input.pressed(KeyCode::LControl) && keyboard_input.just_pressed(KeyCode::W) {
-        //     exit.send(AppExit);
-        // }
         if keyboard_input.just_pressed(KeyCode::F11) {
             if window.mode() == WindowMode::Windowed {
                 window.set_mode(WindowMode::BorderlessFullscreen);
@@ -139,12 +131,10 @@ struct Bullet;
 
 #[derive(Component)]
 struct Direction {
-    // x: f32,
-    // y: f32,
     dir: Vec2,
 }
 
-fn mouse_button_input(
+fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     buttons: Res<Input<MouseButton>>, 
     windows: Res<Windows>, 
     mut commands: Commands,
@@ -152,7 +142,6 @@ fn mouse_button_input(
 ) {
     let window = windows.get_primary().unwrap();
     if let Some(_position) = window.cursor_position() {
-        // println!("{:?}", window.cursor_position());
         match Some(_position) {
             Some(vec) => {
                 for mut player in positions.iter_mut() {
@@ -174,12 +163,10 @@ fn mouse_button_input(
                                 FillMode::color(Color::BLACK),
                             ),
                             Transform {
-                                // translation: Vec3::new(vec.x-window.width()/2.0, vec.y-window.height()/2.0, 0.0),
                                 translation: Vec3::new(player.translation.x, player.translation.y, 0.0),
                                 ..Default::default()
                             },
                         )).insert(Bullet)
-                        // .insert(Direction { x: vec.x - player.translation.x, y: vec.y - player.translation.y });
                         .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
                     }
                 }
@@ -197,9 +184,11 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
     }
 }
 
-fn kill_bullets(mut commands: Commands, mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,) {
+fn kill_bullets(mut commands: Commands, mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>, windows: Res<Windows>,) {
+    let window = windows.get_primary().unwrap();
+
     for ((mut transform, bullet_entity), _bullet) in bullets.iter_mut() {
-        if transform.translation.x.abs() > WINDOW_W/2. || transform.translation.y.abs() > WINDOW_H/2. { 
+        if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
             commands.entity(bullet_entity).despawn(); 
         }
     }
