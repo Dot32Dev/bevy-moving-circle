@@ -44,6 +44,11 @@ fn setup_camera(mut commands: Commands) {
 struct Player;
 
 #[derive(Component)]
+struct Velocity {
+    value: Vec2,
+}
+
+#[derive(Component)]
 struct Turret;
 
 fn create_player(mut commands: Commands) {
@@ -65,6 +70,7 @@ fn create_player(mut commands: Commands) {
         },
     ))
     .insert(Player)
+    .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
             parent.spawn_bundle(SpriteBundle {
                 sprite: Sprite {
@@ -81,20 +87,24 @@ fn create_player(mut commands: Commands) {
         });
 }
 
-fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<&mut Transform, With<Player>>,) {
-    for mut transform in positions.iter_mut() {
+fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<(&mut Transform, &mut Velocity), With<Player>>,) {
+    for (mut transform, mut velocity) in positions.iter_mut() {
         if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
-            transform.translation.x -= 3.;
+            velocity.value.x -= 0.37;
         }
         if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
-            transform.translation.x += 3.;
+            velocity.value.x += 0.37;
         }
         if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
-            transform.translation.y -= 3.;
+            velocity.value.y -= 0.37;
         }
         if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
-            transform.translation.y += 3.;
+            velocity.value.y += 0.37;
         }
+
+        velocity.value *= 0.9;
+
+        transform.translation += velocity.value.extend(0.0);
     }
 }
 
@@ -187,7 +197,7 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
 fn kill_bullets(mut commands: Commands, mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>, windows: Res<Windows>,) {
     let window = windows.get_primary().unwrap();
 
-    for ((mut transform, bullet_entity), _bullet) in bullets.iter_mut() {
+    for ((transform, bullet_entity), _bullet) in bullets.iter_mut() {
         if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
             commands.entity(bullet_entity).despawn(); 
         }
