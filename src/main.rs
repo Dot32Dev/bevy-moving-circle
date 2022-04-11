@@ -54,7 +54,7 @@ struct Turret;
 fn create_player(mut commands: Commands) {
     let shape = shapes::RegularPolygon { // Define circle
         sides: 30,
-        feature: shapes::RegularPolygonFeature::Radius(18.0),
+        feature: shapes::RegularPolygonFeature::Radius(20.0),
         ..shapes::RegularPolygon::default()
     };
 
