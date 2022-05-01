@@ -49,6 +49,11 @@ struct Velocity {
 }
 
 #[derive(Component)]
+struct AttackTimer {
+    value: f32,
+}
+
+#[derive(Component)]
 struct Turret;
 
 fn create_player(mut commands: Commands) {
@@ -70,6 +75,7 @@ fn create_player(mut commands: Commands) {
         },
     ))
     .insert(Player)
+    .insert(AttackTimer { value: 0.0 })
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
             parent.spawn_bundle(SpriteBundle {
@@ -87,7 +93,11 @@ fn create_player(mut commands: Commands) {
         });
 }
 
-fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<(&mut Transform, &mut Velocity), With<Player>>,) {
+fn movement(keyboard_input: Res<Input<KeyCode>>,
+    mut positions: Query<(&mut Transform,
+    &mut Velocity),
+    With<Player>>,
+) {
     for (mut transform, mut velocity) in positions.iter_mut() {
         if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
             velocity.value.x -= 0.37;
@@ -108,7 +118,10 @@ fn movement(keyboard_input: Res<Input<KeyCode>>, mut positions: Query<(&mut Tran
     }
 }
 
-fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<AppExit>, mut windows: ResMut<Windows>,) {
+fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>,
+    mut exit: EventWriter<AppExit>,
+    mut windows: ResMut<Windows>,
+) {
     let window = windows.get_primary_mut().unwrap();
 
     if env::consts::OS == "macos" {
@@ -116,7 +129,9 @@ fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>, mut exit: EventWriter<Ap
             exit.send(AppExit);
             window.set_mode(WindowMode::Windowed);
         }
-        if keyboard_input.pressed(KeyCode::LWin) && keyboard_input.pressed(KeyCode::LControl) && keyboard_input.just_pressed(KeyCode::F) {
+        if keyboard_input.pressed(KeyCode::LWin) 
+        && keyboard_input.pressed(KeyCode::LControl) 
+        && keyboard_input.just_pressed(KeyCode::F) {
             println!("{:?}", window.mode());
             if window.mode() == WindowMode::Windowed {
                 window.set_mode(WindowMode::BorderlessFullscreen);
@@ -147,16 +162,18 @@ struct Direction {
 fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     buttons: Res<Input<MouseButton>>, 
     windows: Res<Windows>, 
+    time: Res<Time>,
     mut commands: Commands,
-    mut positions: Query<&mut Transform, With<Player>>,
+    mut positions: Query<(&mut Transform, &mut AttackTimer), With<Player>>,
 ) {
     let window = windows.get_primary().unwrap();
     if let Some(_position) = window.cursor_position() {
         match Some(_position) {
             Some(vec) => {
-                for mut player in positions.iter_mut() {
-                    // let window_size = (window.width(), window.height());
-                    let diff = Vec3::new(vec.x - window.width()/2.0, vec.y - window.height()/2.0, 0.) - player.translation;
+                for (mut player, mut attack_timer) in positions.iter_mut() {
+                    let window_size = Vec2::new(window.width(), window.height());
+                    // let diff = Vec3::new(vec.x - window.width()/2.0, vec.y - window.height()/2.0, 0.) - player.translation;
+                    let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation;
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
                     player.rotation = Quat::from_rotation_z(angle);
 
@@ -177,8 +194,11 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                                 ..Default::default()
                             },
                         )).insert(Bullet)
-                        .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
+                        // .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
+                        .insert(Direction{dir:(vec - player.translation.truncate() - window_size/2.0).normalize()});
                     }
+
+                    attack_timer.value += time.delta_seconds()
                 }
 
             },
@@ -194,7 +214,11 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
     }
 }
 
-fn kill_bullets(mut commands: Commands, mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>, windows: Res<Windows>,) {
+fn kill_bullets(
+    mut commands: Commands,
+    mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,
+    windows: Res<Windows>,
+) {
     let window = windows.get_primary().unwrap();
 
     for ((transform, bullet_entity), _bullet) in bullets.iter_mut() {
