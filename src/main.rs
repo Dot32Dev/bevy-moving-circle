@@ -177,7 +177,8 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
                     player.rotation = Quat::from_rotation_z(angle);
 
-                    if buttons.just_pressed(MouseButton::Left) {
+                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
+                        attack_timer.value = 0.0;
                         println!("x{}, y{}", vec.x, vec.y);
                         let shape = shapes::RegularPolygon {
                             sides: 30,
