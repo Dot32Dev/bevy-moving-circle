@@ -10,7 +10,6 @@ const TIME_STEP: f32 = 1.0 / 120.0;
 
 fn main() {
     App::new()
-    .add_startup_system(setup_camera)
     // .insert_resource(Msaa { samples: 4 })
     .insert_resource(WindowDescriptor {
             title: "Tiny Tank (bevy edition)".to_string(),
@@ -21,6 +20,7 @@ fn main() {
         })
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .add_startup_system(create_player)
+    .add_startup_system(setup)
     .add_plugins(DefaultPlugins)
     .add_plugin(ShapePlugin)
     .add_system(quit_and_resize)
@@ -35,10 +35,18 @@ fn main() {
     .run();
 }
 
-fn setup_camera(mut commands: Commands) {
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     println!("{}", env::consts::OS); // Prints the current OS.
+    
+    let gunshot = asset_server.load("ShotsFired.ogg");
+    commands.insert_resource(GunshotSound(gunshot));
 }
+
+struct GunshotSound(Handle<AudioSource>);
 
 #[derive(Component)]
 struct Player;
@@ -163,6 +171,8 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     buttons: Res<Input<MouseButton>>, 
     windows: Res<Windows>, 
     time: Res<Time>,
+    audio: Res<Audio>,
+    sound: Res<GunshotSound>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer), With<Player>>,
 ) {
@@ -179,6 +189,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
                         attack_timer.value = 0.0;
+                        audio.play(sound.0.clone());
                         println!("x{}, y{}", vec.x, vec.y);
                         let shape = shapes::RegularPolygon {
                             sides: 30,
