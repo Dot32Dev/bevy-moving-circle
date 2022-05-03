@@ -15,7 +15,7 @@ fn main() {
             title: "Tiny Tank (bevy edition)".to_string(),
             width: 800.,
             height: 600.,
-            vsync: true,
+            present_mode: PresentMode::Fifo, // Vesync enabled, replace Fifo with Mailbox for no vsync
             ..Default::default()
         })
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
@@ -52,6 +52,9 @@ struct GunshotSound(Handle<AudioSource>);
 struct Player;
 
 #[derive(Component)]
+struct Tank;
+
+#[derive(Component)]
 struct Velocity {
     value: Vec2,
 }
@@ -83,6 +86,7 @@ fn create_player(mut commands: Commands) {
         },
     ))
     .insert(Player)
+    .insert(Tank)
     .insert(AttackTimer { value: 0.0 })
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
@@ -187,7 +191,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
                     player.rotation = Quat::from_rotation_z(angle);
 
-                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
+                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.1 {
                         attack_timer.value = 0.0;
                         audio.play(sound.0.clone());
                         println!("x{}, y{}", vec.x, vec.y);
