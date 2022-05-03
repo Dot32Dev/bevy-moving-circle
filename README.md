@@ -1,3 +1,5 @@
+!! Currently only compiling in bevy 0.6
+
 # bevy-moving-circle
 A yellow circle player controlled with arrow keys/WASD
 
