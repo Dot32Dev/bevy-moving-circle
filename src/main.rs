@@ -5,6 +5,7 @@ use bevy::core::FixedTimestep;
 
 use bevy_prototype_lyon::prelude::*; // Draw circles with ease
 use std::env; // Detect OS for OS specific keybinds
+use dot32_intro::*;
 
 const TIME_STEP: f32 = 1.0 / 120.0;
 
@@ -32,6 +33,7 @@ fn main() {
                 .with_system(update_bullets)
                 .with_system(movement)
         )
+    .add_plugin(Intro)
     .run();
 }
 
@@ -56,6 +58,11 @@ struct Tank;
 
 #[derive(Component)]
 struct Velocity {
+    value: Vec2,
+}
+
+#[derive(Component)]
+struct Target {
     value: Vec2,
 }
 
