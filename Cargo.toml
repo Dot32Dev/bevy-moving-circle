@@ -6,9 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { version = "0.7.0", features = ["dynamic"] }
+# bevy = { version = "0.7.0", features = ["dynamic"] }
+bevy = "0.7"
 bevy_prototype_lyon = "0.5.0"
 dot32_intro = { git = "https://github.com/Dot32IsCool/dot32-intro-rs"}
+bevy_embedded_assets = "0.3.0"
 
 [profile.release]
 opt-level = 'z'     # Optimize for size.

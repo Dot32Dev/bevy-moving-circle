@@ -6,6 +6,7 @@ use bevy::core::FixedTimestep;
 use bevy_prototype_lyon::prelude::*; // Draw circles with ease
 use std::env; // Detect OS for OS specific keybinds
 use dot32_intro::*;
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 
 const TIME_STEP: f32 = 1.0 / 120.0;
 
@@ -24,6 +25,9 @@ fn main() {
     .add_startup_system(setup)
     .add_plugins(DefaultPlugins)
     .add_plugin(ShapePlugin)
+    .add_plugins_with(DefaultPlugins, |group| {
+        group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
+    })
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
     .add_system(kill_bullets)
@@ -61,10 +65,10 @@ struct Velocity {
     value: Vec2,
 }
 
-#[derive(Component)]
-struct Target {
-    value: Vec2,
-}
+// #[derive(Component)]
+// struct Target {
+//     value: Vec2,
+// }
 
 #[derive(Component)]
 struct AttackTimer {
