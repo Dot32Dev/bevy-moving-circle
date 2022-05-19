@@ -23,11 +23,10 @@ fn main() {
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .add_startup_system(create_player)
     .add_startup_system(setup)
-    .add_plugins(DefaultPlugins)
-    .add_plugin(ShapePlugin)
     .add_plugins_with(DefaultPlugins, |group| {
         group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
     })
+    .add_plugin(ShapePlugin)
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
     .add_system(kill_bullets)
