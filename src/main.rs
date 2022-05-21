@@ -34,6 +34,7 @@ fn main() {
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
     .add_system(ai_rotate)
+    .add_system(collision)
     .add_system(kill_bullets)
     .add_system_set(
             SystemSet::new()
@@ -198,6 +199,14 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
         velocity.value *= 0.9;
 
         transform.translation += velocity.value.extend(0.0);
+    }
+}
+
+fn collision(mut tanks: Query<&mut Transform, With<Tank>>, mut windows: ResMut<Windows>,) {
+    let window = windows.get_primary_mut().unwrap();
+    for mut tank in tanks.iter_mut() {
+        tank.translation.x = tank.translation.x.min(window.width() - window.width()/2.0).max(0.0 - window.width()/2.0);
+        tank.translation.y = tank.translation.y.min(window.height() - window.height()/2.0).max(0.0 - window.height()/2.0);
     }
 }
 
