@@ -118,6 +118,7 @@ fn create_player(mut commands: Commands) {
     .insert(Player)
     .insert(Tank)
     .insert(AttackTimer { value: 0.0 } ) 
+    .insert(DirectionAi { value: 0 } ) 
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     // .insert(Target {value: Vec2::new(0.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
@@ -202,17 +203,37 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
     }
 }
 
-fn collision(mut tanks: Query<(&mut Transform, &mut Velocity), With<Tank>>, mut windows: ResMut<Windows>,) {
+fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, &mut DirectionAi), With<Tank>>, mut windows: ResMut<Windows>,) {
     let window = windows.get_primary_mut().unwrap();
-    for (mut tank, mut velocity) in tanks.iter_mut() {
-        if tank.translation.x > window.width() - window.width()/2.0 || tank.translation.x < 0.0  - window.width()/2.0 {
+    for (mut tank, mut velocity, mut direction) in tanks.iter_mut() {
+        // if tank.translation.x > window.width() - window.width()/2.0 || tank.translation.x < 0.0  - window.width()/2.0 {
+        //     velocity.value.x = 0.0;
+        // }
+        // if tank.translation.y > window.height() - window.height()/2.0 || tank.translation.y < 0.0 - window.height()/2.0 {
+        //     velocity.value.y = 0.0;
+        // }
+        // tank.translation.x = tank.translation.x.min(window.width() - window.width()/2.0).max(0.0 - window.width()/2.0);
+        // tank.translation.y = tank.translation.y.min(window.height() - window.height()/2.0).max(0.0 - window.height()/2.0);
+        if tank.translation.x > window.width() - window.width()/2.0 {
             velocity.value.x = 0.0;
+            tank.translation.x = window.width()/2.0;
+            direction.value = 0;
         }
-        if tank.translation.y > window.height() - window.height()/2.0 || tank.translation.y < 0.0 - window.height()/2.0 {
+        if tank.translation.x < -window.width()/2.0 {
+            velocity.value.x = 0.0;
+            tank.translation.x = -window.width()/2.0;
+            direction.value = 1;
+        }
+        if tank.translation.y > window.height() - window.height()/2.0 {
             velocity.value.y = 0.0;
+            tank.translation.y = window.height()/2.0;
+            direction.value = 2;
         }
-        tank.translation.x = tank.translation.x.min(window.width() - window.width()/2.0).max(0.0 - window.width()/2.0);
-        tank.translation.y = tank.translation.y.min(window.height() - window.height()/2.0).max(0.0 - window.height()/2.0);
+        if tank.translation.y < -window.height()/2.0 {
+            velocity.value.y = 0.0;
+            tank.translation.y = -window.height()/2.0;
+            direction.value = 3;
+        }
     }
 }
 
