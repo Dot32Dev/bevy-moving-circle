@@ -79,6 +79,21 @@ struct Velocity {
 //     value: Vec2,
 // }
 
+enum TurretOf {
+	Player,
+    Ai
+}
+
+#[derive(Component)]
+struct Bullet {
+    from: TurretOf,
+}
+
+#[derive(Component)]
+struct Direction {
+    dir: Vec2,
+}
+
 #[derive(Component)]
 struct AttackTimer {
     value: f32,
@@ -300,13 +315,6 @@ fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>,
     }
 }
 
-#[derive(Component)]
-struct Bullet;
-
-#[derive(Component)]
-struct Direction {
-    dir: Vec2,
-}
 
 fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     buttons: Res<Input<MouseButton>>, 
@@ -346,7 +354,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                                 translation: Vec3::new(player.translation.x, player.translation.y, 0.0),
                                 ..Default::default()
                             },
-                        )).insert(Bullet)
+                        )).insert(Bullet {from: TurretOf::Player} )
                         // .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
                         .insert(Direction{dir:(vec - player.translation.truncate() - window_size/2.0).normalize()});
                     }
@@ -394,7 +402,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                         translation: Vec3::new(ai.translation.x, ai.translation.y, 0.0),
                         ..Default::default()
                     },
-                )).insert(Bullet)
+                )).insert(Bullet {from: TurretOf::Ai} )
                 // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
                 .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
             }
