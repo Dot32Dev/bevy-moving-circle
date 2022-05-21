@@ -7,8 +7,11 @@ use bevy_prototype_lyon::prelude::*; // Draw circles with ease
 use std::env; // Detect OS for OS specific keybinds
 use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
+use rand::Rng;
+
 
 const TIME_STEP: f32 = 1.0 / 120.0;
+const TANK_SPEED: f32 = 0.37;
 
 fn main() {
     App::new()
@@ -81,6 +84,16 @@ struct AttackTimer {
 }
 
 #[derive(Component)]
+struct Steps {
+    value: f32,
+}
+
+#[derive(Component)]
+struct DirectionAi {
+    value: u8,
+}
+
+#[derive(Component)]
 struct Turret;
 
 fn create_player(mut commands: Commands) {
@@ -143,6 +156,8 @@ fn create_enemy(mut commands: Commands) {
     .insert(Ai)
     .insert(Tank)
     .insert(AttackTimer { value: 0.0 } ) 
+    .insert(Steps { value: 0.0 } ) 
+    .insert(DirectionAi { value: 0 } ) 
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     // .insert(Target {value: Vec2::new(0.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
@@ -168,16 +183,16 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
 ) {
     for (mut transform, mut velocity) in positions.iter_mut() {
         if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
-            velocity.value.x -= 0.37;
+            velocity.value.x -= TANK_SPEED;
         }
         if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
-            velocity.value.x += 0.37;
+            velocity.value.x += TANK_SPEED;
         }
         if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
-            velocity.value.y -= 0.37;
+            velocity.value.y -= TANK_SPEED;
         }
         if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
-            velocity.value.y += 0.37;
+            velocity.value.y += TANK_SPEED;
         }
 
         velocity.value *= 0.9;
@@ -186,28 +201,33 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
     }
 }
 
-fn ai_movement(keyboard_input: Res<Input<KeyCode>>,
-    mut positions: Query<(&mut Transform,
-    &mut Velocity),
-    With<Ai>>,
+fn ai_movement(
+    time: Res<Time>,
+    mut positions: Query<(&mut Transform, &mut Velocity, &mut Steps, &mut DirectionAi), With<Ai>>,
 ) {
-    for (mut transform, mut velocity) in positions.iter_mut() {
-        // if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
-        //     velocity.value.x -= 0.37;
-        // }
-        // if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
-        //     velocity.value.x += 0.37;
-        // }
-        // if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
-        //     velocity.value.y -= 0.37;
-        // }
-        // if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
-        //     velocity.value.y += 0.37;
-        // }
+    for (mut transform, mut velocity, mut steps, mut direction) in positions.iter_mut() {
+        if steps.value < 0.0 {
+            direction.value = rand::thread_rng().gen_range(0, 3) as u8;
+            steps.value = rand::thread_rng().gen_range(1, 4) as f32;
+        }
+        if direction.value == 0  {
+            velocity.value.x -= TANK_SPEED;
+        }
+        if direction.value == 1  {
+            velocity.value.x += TANK_SPEED;
+        }
+        if direction.value == 2  {
+            velocity.value.y -= TANK_SPEED;
+        }
+        if direction.value == 3  {
+            velocity.value.y += TANK_SPEED;
+        }
 
         velocity.value *= 0.9;
 
         transform.translation += velocity.value.extend(0.0);
+
+        steps.value -= time.delta_seconds();
     }
 }
 
