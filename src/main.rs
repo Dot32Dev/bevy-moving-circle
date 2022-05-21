@@ -22,6 +22,7 @@ fn main() {
         })
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .add_startup_system(create_player)
+    .add_startup_system(create_enemy)
     .add_startup_system(setup)
     .add_plugins_with(DefaultPlugins, |group| {
         group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
@@ -29,12 +30,14 @@ fn main() {
     .add_plugin(ShapePlugin)
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
+    .add_system(ai_rotate)
     .add_system(kill_bullets)
     .add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
                 .with_system(update_bullets)
                 .with_system(movement)
+                .with_system(ai_movement)
         )
     .add_plugin(Intro)
     .run();
@@ -55,6 +58,9 @@ struct GunshotSound(Handle<AudioSource>);
 
 #[derive(Component)]
 struct Player;
+
+#[derive(Component)]
+struct Ai;
 
 #[derive(Component)]
 struct Tank;
@@ -97,8 +103,48 @@ fn create_player(mut commands: Commands) {
     ))
     .insert(Player)
     .insert(Tank)
-    .insert(AttackTimer { value: 0.0 })
+    .insert(AttackTimer { value: 0.0 } ) 
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
+    // .insert(Target {value: Vec2::new(0.0, 0.0) } )
+    .with_children(|parent| { // Add turret to player
+            parent.spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0., 0., 0.),
+                    ..Default::default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(16.0, 16.0, 0.),
+                    translation: Vec3::new(24.0, 0.0, -1.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            }).insert(Turret);
+        });
+}
+
+fn create_enemy(mut commands: Commands) {
+    let shape = shapes::RegularPolygon { // Define circle
+        sides: 30,
+        feature: shapes::RegularPolygonFeature::Radius(20.0),
+        ..shapes::RegularPolygon::default()
+    };
+
+    commands.spawn_bundle(GeometryBuilder::build_as(
+        &shape,
+        DrawMode::Outlined {
+            fill_mode: FillMode::color(Color::ORANGE),
+            outline_mode: StrokeMode::new(Color::BLACK, 4.0),
+        },
+        Transform {
+            translation: Vec3::new(0.0, 0.0, 1.0),
+            ..Default::default()
+        },
+    ))
+    .insert(Ai)
+    .insert(Tank)
+    .insert(AttackTimer { value: 0.0 } ) 
+    .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
+    // .insert(Target {value: Vec2::new(0.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
             parent.spawn_bundle(SpriteBundle {
                 sprite: Sprite {
@@ -133,6 +179,31 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
         if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
             velocity.value.y += 0.37;
         }
+
+        velocity.value *= 0.9;
+
+        transform.translation += velocity.value.extend(0.0);
+    }
+}
+
+fn ai_movement(keyboard_input: Res<Input<KeyCode>>,
+    mut positions: Query<(&mut Transform,
+    &mut Velocity),
+    With<Ai>>,
+) {
+    for (mut transform, mut velocity) in positions.iter_mut() {
+        // if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+        //     velocity.value.x -= 0.37;
+        // }
+        // if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+        //     velocity.value.x += 0.37;
+        // }
+        // if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
+        //     velocity.value.y -= 0.37;
+        // }
+        // if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
+        //     velocity.value.y += 0.37;
+        // }
 
         velocity.value *= 0.9;
 
@@ -201,7 +272,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
                     player.rotation = Quat::from_rotation_z(angle);
 
-                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.1 {
+                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
                         attack_timer.value = 0.0;
                         audio.play(sound.0.clone());
                         println!("x{}, y{}", vec.x, vec.y);
@@ -232,6 +303,52 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
         }
     }
 }
+
+fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
+    time: Res<Time>,
+    audio: Res<Audio>,
+    sound: Res<GunshotSound>,
+    players: Query<&Transform, (Without<Ai>, With<Player>)>,
+    mut commands: Commands,
+    mut positions: Query<(&mut Transform, &mut AttackTimer), With<Ai>>,
+) {
+    for player in players.iter() {
+        for (mut ai, mut attack_timer) in positions.iter_mut() {
+            // let window_size = Vec2::new(window.width(), window.height());
+            let diff = Vec3::new(player.translation.x, player.translation.y, 0.) - ai.translation;
+            // let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - ai.translation;
+            let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
+            ai.rotation = Quat::from_rotation_z(angle);
+
+            if attack_timer.value > 0.8 {
+                attack_timer.value = 0.0;
+                audio.play(sound.0.clone());
+                println!("x{}, y{}", player.translation.x, player.translation.y);
+                let shape = shapes::RegularPolygon {
+                    sides: 30,
+                    feature: shapes::RegularPolygonFeature::Radius(6.0),
+                    ..shapes::RegularPolygon::default()
+                };
+                commands.spawn_bundle(GeometryBuilder::build_as(
+                    &shape,
+                    DrawMode::Fill (
+                        FillMode::color(Color::BLACK),
+                    ),
+                    Transform {
+                        translation: Vec3::new(ai.translation.x, ai.translation.y, 0.0),
+                        ..Default::default()
+                    },
+                )).insert(Bullet)
+                // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
+                .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
+            }
+
+            attack_timer.value += time.delta_seconds()
+        }
+    }
+
+}
+
 
 fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>,) {
     for (mut transform, direction) in bullets.iter_mut() {
