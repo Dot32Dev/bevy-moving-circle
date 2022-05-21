@@ -202,9 +202,15 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
     }
 }
 
-fn collision(mut tanks: Query<&mut Transform, With<Tank>>, mut windows: ResMut<Windows>,) {
+fn collision(mut tanks: Query<(&mut Transform, &mut Velocity), With<Tank>>, mut windows: ResMut<Windows>,) {
     let window = windows.get_primary_mut().unwrap();
-    for mut tank in tanks.iter_mut() {
+    for (mut tank, mut velocity) in tanks.iter_mut() {
+        if tank.translation.x > window.width() - window.width()/2.0 || tank.translation.x < 0.0  - window.width()/2.0 {
+            velocity.value.x = 0.0;
+        }
+        if tank.translation.y > window.height() - window.height()/2.0 || tank.translation.y < 0.0 - window.height()/2.0 {
+            velocity.value.y = 0.0;
+        }
         tank.translation.x = tank.translation.x.min(window.width() - window.width()/2.0).max(0.0 - window.width()/2.0);
         tank.translation.y = tank.translation.y.min(window.height() - window.height()/2.0).max(0.0 - window.height()/2.0);
     }
@@ -216,8 +222,8 @@ fn ai_movement(
 ) {
     for (mut transform, mut velocity, mut steps, mut direction) in positions.iter_mut() {
         if steps.value < 0.0 {
-            direction.value = rand::thread_rng().gen_range(0, 3) as u8;
-            steps.value = rand::thread_rng().gen_range(1, 4) as f32;
+            direction.value = rand::thread_rng().gen_range(0, 4) as u8;
+            steps.value = rand::thread_rng().gen_range(1, 110) as f32 / 110.0;
         }
         if direction.value == 0  {
             velocity.value.x -= TANK_SPEED;
