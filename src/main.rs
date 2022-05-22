@@ -74,11 +74,6 @@ struct Velocity {
     value: Vec2,
 }
 
-// #[derive(Component)]
-// struct Target {
-//     value: Vec2,
-// }
-
 enum TurretOf {
 	Player,
     Ai
@@ -133,9 +128,8 @@ fn create_player(mut commands: Commands) {
     .insert(Player)
     .insert(Tank)
     .insert(AttackTimer { value: 0.0 } ) 
-    .insert(DirectionAi { value: 0 } ) 
+    .insert(DirectionAi { value: 0 } ) // required so that the actual ai can update its direction upon collision
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
-    // .insert(Target {value: Vec2::new(0.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
             parent.spawn_bundle(SpriteBundle {
                 sprite: Sprite {
@@ -384,8 +378,8 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
             let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
             ai.rotation = Quat::from_rotation_z(angle);
 
-            if attack_timer.value > 0.8 {
-                attack_timer.value = 0.0;
+            if attack_timer.value < 0.0 {
+                attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;;
                 audio.play(sound.0.clone());
                 println!("x{}, y{}", player.translation.x, player.translation.y);
                 let shape = shapes::RegularPolygon {
@@ -407,7 +401,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
             }
 
-            attack_timer.value += time.delta_seconds()
+            attack_timer.value -= time.delta_seconds()
         }
     }
 
