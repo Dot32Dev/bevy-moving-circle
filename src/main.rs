@@ -61,7 +61,7 @@ fn setup(
     let gunshot = asset_server.load("ShotsFired.ogg");
     commands.insert_resource(GunshotSound(gunshot));
 
-    let gunshot_deep = asset_server.load("ShotsFired.ogg");
+    let gunshot_deep = asset_server.load("ShotsFiredDeep.ogg");
     commands.insert_resource(GunshotDeepSound(gunshot_deep));
 }
 
@@ -331,26 +331,40 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     time: Res<Time>,
     audio: Res<Audio>,
     gunshot: Res<GunshotSound>,
-    gunshot_deep: Res<GunshotSound>,
+    gunshot_deep: Res<GunshotDeepSound>,
     mut commands: Commands,
-    mut positions: Query<(&mut Transform, &mut AttackTimer), With<Player>>,
+    mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
+    mut transform_query: Query<&mut Transform, (With<Turret>, Without<Player>)>,
 ) {
     let window = windows.get_primary().unwrap();
     if let Some(_position) = window.cursor_position() {
         match Some(_position) {
             Some(vec) => {
-                for (mut player, mut attack_timer) in positions.iter_mut() {
+                for (mut player, mut attack_timer, children) in positions.iter_mut() {
                     let window_size = Vec2::new(window.width(), window.height());
                     // let diff = Vec3::new(vec.x - window.width()/2.0, vec.y - window.height()/2.0, 0.) - player.translation;
                     let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation;
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
                     player.rotation = Quat::from_rotation_z(angle);
 
+                    for child in children.iter() {
+                        if let Ok(mut transform) = transform_query.get_mut(*child) {
+                            transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                        }
+                    }
+
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
                         attack_timer.value = 0.0;
                         audio.play(gunshot.0.clone());
                         audio.play(gunshot_deep.0.clone());
-                        println!("x{}, y{}", vec.x, vec.y);
+
+                        for child in children.iter() {
+                            if let Ok(mut transform) = transform_query.get_mut(*child) {
+                                transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                            }
+                        }
+
+                        // println!("x{}, y{}", vec.x, vec.y);
                         let shape = shapes::RegularPolygon {
                             sides: 30,
                             feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
@@ -383,23 +397,37 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     time: Res<Time>,
     audio: Res<Audio>,
     gunshot: Res<GunshotSound>,
-    gunshot_deep: Res<GunshotSound>,
+    gunshot_deep: Res<GunshotDeepSound>,
     players: Query<&Transform, (Without<Ai>, With<Player>)>,
     mut commands: Commands,
-    mut positions: Query<(&mut Transform, &mut AttackTimer), With<Ai>>,
+    mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Ai>>,
+    mut transform_query: Query<&mut Transform, (With<Turret>, Without<Ai>, Without<Player>)>,
 ) {
     for player in players.iter() {
-        for (mut ai, mut attack_timer) in positions.iter_mut() {
+        for (mut ai, mut attack_timer, children) in positions.iter_mut() {
             // let window_size = Vec2::new(window.width(), window.height());
             let diff = Vec3::new(player.translation.x, player.translation.y, 0.) - ai.translation;
             // let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - ai.translation;
             let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
             ai.rotation = Quat::from_rotation_z(angle);
 
+            for child in children.iter() {
+                if let Ok(mut transform) = transform_query.get_mut(*child) {
+                    transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                }
+            }
+
             if attack_timer.value < 0.0 {
                 attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
                 audio.play(gunshot.0.clone());
                 audio.play(gunshot_deep.0.clone());
+
+                for child in children.iter() {
+                    if let Ok(mut transform) = transform_query.get_mut(*child) {
+                        transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                    }
+                }
+
                 // println!("x{}, y{}", player.translation.x, player.translation.y);
                 let shape = shapes::RegularPolygon {
                     sides: 30,
