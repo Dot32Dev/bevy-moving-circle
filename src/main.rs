@@ -9,9 +9,12 @@ use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
 
+const TIME_STEP: f32 = 1.0 / 120.0; // FPS
 
-const TIME_STEP: f32 = 1.0 / 120.0;
 const TANK_SPEED: f32 = 0.37;
+const TANK_SIZE: f32 = 20.0; 
+
+const BULLET_SIZE: f32 = 6.0; 
 
 fn main() {
     App::new()
@@ -36,6 +39,7 @@ fn main() {
     .add_system(ai_rotate)
     .add_system(collision)
     .add_system(kill_bullets)
+    .add_system(hurt_tanks)
     .add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
@@ -95,6 +99,11 @@ struct AttackTimer {
 }
 
 #[derive(Component)]
+struct Health {
+    value: u8,
+}
+
+#[derive(Component)]
 struct Steps {
     value: f32,
 }
@@ -110,7 +119,7 @@ struct Turret;
 fn create_player(mut commands: Commands) {
     let shape = shapes::RegularPolygon { // Define circle
         sides: 30,
-        feature: shapes::RegularPolygonFeature::Radius(20.0),
+        feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
         ..shapes::RegularPolygon::default()
     };
 
@@ -128,6 +137,7 @@ fn create_player(mut commands: Commands) {
     .insert(Player)
     .insert(Tank)
     .insert(AttackTimer { value: 0.0 } ) 
+    .insert(Health { value: 5 } ) 
     .insert(DirectionAi { value: 0 } ) // required so that the actual ai can update its direction upon collision
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
@@ -138,7 +148,7 @@ fn create_player(mut commands: Commands) {
                 },
                 transform: Transform {
                     scale: Vec3::new(16.0, 16.0, 0.),
-                    translation: Vec3::new(24.0, 0.0, -1.0),
+                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -149,7 +159,7 @@ fn create_player(mut commands: Commands) {
 fn create_enemy(mut commands: Commands) {
     let shape = shapes::RegularPolygon { // Define circle
         sides: 30,
-        feature: shapes::RegularPolygonFeature::Radius(20.0),
+        feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
         ..shapes::RegularPolygon::default()
     };
 
@@ -167,6 +177,7 @@ fn create_enemy(mut commands: Commands) {
     .insert(Ai)
     .insert(Tank)
     .insert(AttackTimer { value: 0.0 } ) 
+    .insert(Health { value: 5 } ) 
     .insert(Steps { value: 0.0 } ) 
     .insert(DirectionAi { value: 0 } ) 
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
@@ -179,7 +190,7 @@ fn create_enemy(mut commands: Commands) {
                 },
                 transform: Transform {
                     scale: Vec3::new(16.0, 16.0, 0.),
-                    translation: Vec3::new(24.0, 0.0, -1.0),
+                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -336,7 +347,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                         println!("x{}, y{}", vec.x, vec.y);
                         let shape = shapes::RegularPolygon {
                             sides: 30,
-                            feature: shapes::RegularPolygonFeature::Radius(6.0),
+                            feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
                             ..shapes::RegularPolygon::default()
                         };
                         commands.spawn_bundle(GeometryBuilder::build_as(
@@ -379,12 +390,12 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
             ai.rotation = Quat::from_rotation_z(angle);
 
             if attack_timer.value < 0.0 {
-                attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;;
+                attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
                 audio.play(sound.0.clone());
-                println!("x{}, y{}", player.translation.x, player.translation.y);
+                // println!("x{}, y{}", player.translation.x, player.translation.y);
                 let shape = shapes::RegularPolygon {
                     sides: 30,
-                    feature: shapes::RegularPolygonFeature::Radius(6.0),
+                    feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
                     ..shapes::RegularPolygon::default()
                 };
                 commands.spawn_bundle(GeometryBuilder::build_as(
@@ -407,6 +418,33 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
 
 }
 
+fn hurt_tanks(
+    mut commands: Commands,
+    bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
+    mut players: Query<(&mut Transform, Entity, &mut Health), (With<Player>, Without<Ai>, Without<Bullet>)>,
+    mut ais: Query<(&Transform, Entity, &mut Health), (Without<Player>, With<Ai>, Without<Bullet>)>,
+) {
+    for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
+        match bullet_type.from {
+            TurretOf::Player => {
+                for (ai_transform, _ai_entity, mut ai_health) in ais.iter_mut() {
+                    if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
+                        ai_health.value -= 1;
+                        commands.entity(bullet_entity).despawn(); 
+                    }
+                }
+            }
+            TurretOf::Ai => {
+                for (player_transform, _player_entity, mut player_health) in players.iter_mut() {
+                    if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
+                        player_health.value -= 1;
+                        commands.entity(bullet_entity).despawn(); 
+                    }
+                }
+            }
+        }
+    }
+}
 
 fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>,) {
     for (mut transform, direction) in bullets.iter_mut() {
@@ -427,4 +465,10 @@ fn kill_bullets(
             commands.entity(bullet_entity).despawn(); 
         }
     }
+}
+
+fn distance_between(point1: &Vec2, point2: &Vec2) -> f32 {
+    let diff = *point1 - *point2; // (Your assumption *was* correct btw, but this works)
+    // (diff.x.powf(2.0) + diff.y.powf(2.0)).sqrt()
+    diff.length()
 }
