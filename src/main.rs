@@ -60,13 +60,19 @@ fn setup(
     
     let gunshot = asset_server.load("ShotsFired.ogg");
     commands.insert_resource(GunshotSound(gunshot));
-
     let gunshot_deep = asset_server.load("ShotsFiredDeep.ogg");
     commands.insert_resource(GunshotDeepSound(gunshot_deep));
+
+    let tank_hit = asset_server.load("TankHit.ogg");
+    commands.insert_resource(TankHitSound(tank_hit));
+    let tank_hit_deep = asset_server.load("TankHitDeep.ogg");
+    commands.insert_resource(TankHitDeepSound(tank_hit_deep));
 }
 
 struct GunshotSound(Handle<AudioSource>);
 struct GunshotDeepSound(Handle<AudioSource>);
+struct TankHitSound(Handle<AudioSource>);
+struct TankHitDeepSound(Handle<AudioSource>);
 
 #[derive(Component)]
 struct Player;
@@ -455,6 +461,9 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
 }
 
 fn hurt_tanks(
+    audio: Res<Audio>,
+    tank_hit: Res<TankHitSound>,
+    tank_hit_deep: Res<TankHitDeepSound>,
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
     mut players: Query<(&mut Transform, Entity, &mut Health), (With<Player>, Without<Ai>, Without<Bullet>)>,
@@ -467,6 +476,8 @@ fn hurt_tanks(
                     if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if ai_health.value > 0 {
                             ai_health.value -= 1;
+                            audio.play(tank_hit.0.clone());
+                            audio.play(tank_hit_deep.0.clone());
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
                         }
@@ -479,6 +490,8 @@ fn hurt_tanks(
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if player_health.value > 0 {
                             player_health.value -= 1;
+                            audio.play(tank_hit.0.clone());
+                            audio.play(tank_hit_deep.0.clone());
                         } else {
                             commands.entity(player_entity).despawn_recursive(); 
                         }
