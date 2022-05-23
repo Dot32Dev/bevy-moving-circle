@@ -427,17 +427,25 @@ fn hurt_tanks(
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
         match bullet_type.from {
             TurretOf::Player => {
-                for (ai_transform, _ai_entity, mut ai_health) in ais.iter_mut() {
+                for (ai_transform, ai_entity, mut ai_health) in ais.iter_mut() {
                     if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
-                        ai_health.value -= 1;
+                        if ai_health.value > 0 {
+                            ai_health.value -= 1;
+                        } else {
+                            commands.entity(ai_entity).despawn_recursive(); 
+                        }
                         commands.entity(bullet_entity).despawn(); 
                     }
                 }
             }
             TurretOf::Ai => {
-                for (player_transform, _player_entity, mut player_health) in players.iter_mut() {
+                for (player_transform, player_entity, mut player_health) in players.iter_mut() {
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
-                        player_health.value -= 1;
+                        if player_health.value > 0 {
+                            player_health.value -= 1;
+                        } else {
+                            commands.entity(player_entity).despawn_recursive(); 
+                        }
                         commands.entity(bullet_entity).despawn(); 
                     }
                 }
