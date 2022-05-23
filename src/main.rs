@@ -60,9 +60,13 @@ fn setup(
     
     let gunshot = asset_server.load("ShotsFired.ogg");
     commands.insert_resource(GunshotSound(gunshot));
+
+    let gunshot_deep = asset_server.load("ShotsFired.ogg");
+    commands.insert_resource(GunshotDeepSound(gunshot_deep));
 }
 
 struct GunshotSound(Handle<AudioSource>);
+struct GunshotDeepSound(Handle<AudioSource>);
 
 #[derive(Component)]
 struct Player;
@@ -326,7 +330,8 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     windows: Res<Windows>, 
     time: Res<Time>,
     audio: Res<Audio>,
-    sound: Res<GunshotSound>,
+    gunshot: Res<GunshotSound>,
+    gunshot_deep: Res<GunshotSound>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer), With<Player>>,
 ) {
@@ -343,7 +348,8 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
                         attack_timer.value = 0.0;
-                        audio.play(sound.0.clone());
+                        audio.play(gunshot.0.clone());
+                        audio.play(gunshot_deep.0.clone());
                         println!("x{}, y{}", vec.x, vec.y);
                         let shape = shapes::RegularPolygon {
                             sides: 30,
@@ -376,7 +382,8 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     time: Res<Time>,
     audio: Res<Audio>,
-    sound: Res<GunshotSound>,
+    gunshot: Res<GunshotSound>,
+    gunshot_deep: Res<GunshotSound>,
     players: Query<&Transform, (Without<Ai>, With<Player>)>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer), With<Ai>>,
@@ -391,7 +398,8 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
 
             if attack_timer.value < 0.0 {
                 attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
-                audio.play(sound.0.clone());
+                audio.play(gunshot.0.clone());
+                audio.play(gunshot_deep.0.clone());
                 // println!("x{}, y{}", player.translation.x, player.translation.y);
                 let shape = shapes::RegularPolygon {
                     sides: 30,
