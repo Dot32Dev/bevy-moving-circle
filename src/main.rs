@@ -476,12 +476,12 @@ fn hurt_tanks(
                     if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if ai_health.value > 0 {
                             ai_health.value -= 1;
-                            audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
                         }
                         commands.entity(bullet_entity).despawn(); 
+                        audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
                     }
                 }
             }
@@ -490,12 +490,12 @@ fn hurt_tanks(
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if player_health.value > 0 {
                             player_health.value -= 1;
-                            audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
                         } else {
                             commands.entity(player_entity).despawn_recursive(); 
                         }
                         commands.entity(bullet_entity).despawn(); 
+                        audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
                     }
                 }
             }
