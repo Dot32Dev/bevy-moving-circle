@@ -67,12 +67,21 @@ fn setup(
     commands.insert_resource(TankHitSound(tank_hit));
     let tank_hit_deep = asset_server.load("TankHitDeep.ogg");
     commands.insert_resource(TankHitDeepSound(tank_hit_deep));
+
+    let wall_hit = asset_server.load("WallHit.ogg");
+    commands.insert_resource(WallHitSound(wall_hit));
+    let wall_hit_deep = asset_server.load("WallHitDeep.ogg");
+    commands.insert_resource(WallHitDeepSound(wall_hit_deep));
 }
 
 struct GunshotSound(Handle<AudioSource>);
 struct GunshotDeepSound(Handle<AudioSource>);
+
 struct TankHitSound(Handle<AudioSource>);
 struct TankHitDeepSound(Handle<AudioSource>);
+
+struct WallHitSound(Handle<AudioSource>);
+struct WallHitDeepSound(Handle<AudioSource>);
 
 #[derive(Component)]
 struct Player;
@@ -511,6 +520,9 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
 }
 
 fn kill_bullets(
+    audio: Res<Audio>,
+    wall_hit: Res<WallHitSound>,
+    wall_hit_deep: Res<WallHitDeepSound>,
     mut commands: Commands,
     mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,
     windows: Res<Windows>,
@@ -520,6 +532,8 @@ fn kill_bullets(
     for ((transform, bullet_entity), _bullet) in bullets.iter_mut() {
         if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
             commands.entity(bullet_entity).despawn(); 
+            audio.play_with_settings(wall_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+            audio.play_with_settings(wall_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
         }
     }
 }
