@@ -24,7 +24,7 @@ fn main() {
             width: 800.,
             height: 600.,
             present_mode: PresentMode::Fifo, // Vesync enabled, replace Fifo with Mailbox for no vsync
-            ..Default::default()
+            ..default()
         })
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .add_startup_system(create_player)
@@ -141,7 +141,7 @@ fn create_player(mut commands: Commands) {
         },
         Transform {
             translation: Vec3::new(0.0, 0.0, 1.0),
-            ..Default::default()
+            ..default()
         },
     ))
     .insert(Player)
@@ -154,14 +154,14 @@ fn create_player(mut commands: Commands) {
             parent.spawn_bundle(SpriteBundle {
                 sprite: Sprite {
                     color: Color::rgb(0., 0., 0.),
-                    ..Default::default()
+                    ..default()
                 },
                 transform: Transform {
                     scale: Vec3::new(16.0, 16.0, 0.),
                     translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
-                    ..Default::default()
+                    ..default()
                 },
-                ..Default::default()
+                ..default()
             }).insert(Turret);
         });
 }
@@ -181,7 +181,7 @@ fn create_enemy(mut commands: Commands) {
         },
         Transform {
             translation: Vec3::new(0.0, 0.0, 1.0),
-            ..Default::default()
+            ..default()
         },
     ))
     .insert(Ai)
@@ -196,14 +196,14 @@ fn create_enemy(mut commands: Commands) {
             parent.spawn_bundle(SpriteBundle {
                 sprite: Sprite {
                     color: Color::rgb(0., 0., 0.),
-                    ..Default::default()
+                    ..default()
                 },
                 transform: Transform {
                     scale: Vec3::new(16.0, 16.0, 0.),
                     translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
-                    ..Default::default()
+                    ..default()
                 },
-                ..Default::default()
+                ..default()
             }).insert(Turret);
         });
 }
@@ -383,7 +383,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             ),
                             Transform {
                                 translation: Vec3::new(player.translation.x, player.translation.y, 0.0),
-                                ..Default::default()
+                                ..default()
                             },
                         )).insert(Bullet {from: TurretOf::Player} )
                         // .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
@@ -447,7 +447,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                     ),
                     Transform {
                         translation: Vec3::new(ai.translation.x, ai.translation.y, 0.0),
-                        ..Default::default()
+                        ..default()
                     },
                 )).insert(Bullet {from: TurretOf::Ai} )
                 // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
