@@ -361,8 +361,8 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
                         attack_timer.value = 0.0;
-                        audio.play(gunshot.0.clone());
-                        audio.play(gunshot_deep.0.clone());
+                        audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
 
                         for child in children.iter() {
                             if let Ok(mut transform) = transform_query.get_mut(*child) {
@@ -425,8 +425,8 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
 
             if attack_timer.value < 0.0 {
                 attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
-                audio.play(gunshot.0.clone());
-                audio.play(gunshot_deep.0.clone());
+                audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
 
                 for child in children.iter() {
                     if let Ok(mut transform) = transform_query.get_mut(*child) {
@@ -476,8 +476,8 @@ fn hurt_tanks(
                     if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if ai_health.value > 0 {
                             ai_health.value -= 1;
-                            audio.play(tank_hit.0.clone());
-                            audio.play(tank_hit_deep.0.clone());
+                            audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
                         }
@@ -490,8 +490,8 @@ fn hurt_tanks(
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if player_health.value > 0 {
                             player_health.value -= 1;
-                            audio.play(tank_hit.0.clone());
-                            audio.play(tank_hit_deep.0.clone());
+                            audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
                         } else {
                             commands.entity(player_entity).despawn_recursive(); 
                         }
