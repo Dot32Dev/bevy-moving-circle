@@ -10,6 +10,7 @@ use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
 
 const TIME_STEP: f32 = 1.0 / 120.0; // FPS
+const MUTE: bool = true;
 
 const TANK_SPEED: f32 = 0.37;
 const TANK_SIZE: f32 = 20.0; 
@@ -160,19 +161,31 @@ fn create_player(mut commands: Commands) {
     .insert(DirectionAi { value: 0 } ) // required so that the actual ai can update its direction upon collision
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
-            parent.spawn_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgb(0., 0., 0.),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(16.0, 16.0, 0.),
-                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
-                    ..default()
-                },
+        parent.spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb(0., 0., 0.),
                 ..default()
-            }).insert(Turret);
+            },
+            transform: Transform {
+                scale: Vec3::new(16.0, 16.0, 0.),
+                translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+                ..default()
+            },
+            ..default()
+        }).insert(Turret);
+        parent.spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::GREEN,
+                ..default()
+            },
+            transform: Transform {
+                scale: Vec3::new(36.0, 16.0, 0.),
+                translation: Vec3::new(-TANK_SIZE-4.0, 0.0, -1.0),
+                ..default()
+            },
+            ..default()
         });
+    });
 }
 
 fn create_enemy(mut commands: Commands) {
@@ -202,19 +215,19 @@ fn create_enemy(mut commands: Commands) {
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     // .insert(Target {value: Vec2::new(0.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
-            parent.spawn_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgb(0., 0., 0.),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(16.0, 16.0, 0.),
-                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
-                    ..default()
-                },
+        parent.spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb(0., 0., 0.),
                 ..default()
-            }).insert(Turret);
-        });
+            },
+            transform: Transform {
+                scale: Vec3::new(16.0, 16.0, 0.),
+                translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+                ..default()
+            },
+            ..default()
+        }).insert(Turret);
+    });
 }
 
 fn movement(keyboard_input: Res<Input<KeyCode>>,
@@ -370,8 +383,10 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
                         attack_timer.value = 0.0;
-                        audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                        audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        if !MUTE {
+                            audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        }
 
                         for child in children.iter() {
                             if let Ok(mut transform) = transform_query.get_mut(*child) {
@@ -434,8 +449,10 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
 
             if attack_timer.value < 0.0 {
                 attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
-                audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                if !MUTE {
+                    audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                    audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                }
 
                 for child in children.iter() {
                     if let Ok(mut transform) = transform_query.get_mut(*child) {
@@ -489,8 +506,10 @@ fn hurt_tanks(
                             commands.entity(ai_entity).despawn_recursive(); 
                         }
                         commands.entity(bullet_entity).despawn(); 
-                        audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                        audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
+                        if !MUTE {
+                            audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
+                        }
                     }
                 }
             }
@@ -503,8 +522,10 @@ fn hurt_tanks(
                             commands.entity(player_entity).despawn_recursive(); 
                         }
                         commands.entity(bullet_entity).despawn(); 
-                        audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                        audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
+                        if !MUTE {
+                            audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
+                        }
                     }
                 }
             }
@@ -532,8 +553,10 @@ fn kill_bullets(
     for ((transform, bullet_entity), _bullet) in bullets.iter_mut() {
         if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
             commands.entity(bullet_entity).despawn(); 
-            audio.play_with_settings(wall_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-            audio.play_with_settings(wall_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+            if !MUTE {
+                audio.play_with_settings(wall_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                audio.play_with_settings(wall_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+            }
         }
     }
 }
