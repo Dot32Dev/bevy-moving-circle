@@ -169,7 +169,7 @@ fn create_player(mut commands: Commands) {
             DrawMode::Fill(FillMode::color(Color::NONE)),
             Transform {
                 scale: Vec3::new(1.0, 1.0, 1.0),
-                translation: Vec3::new(0.0, 0.0, 1.0),
+                translation: Vec3::new(0.0, 0.0, 0.0),
                 ..default()
             },
         )).insert(Bearing).with_children(|parent| {
@@ -192,8 +192,8 @@ fn create_player(mut commands: Commands) {
                 ..default()
             },
             transform: Transform {
-                scale: Vec3::new(36.0, 16.0, 0.),
-                translation: Vec3::new(-TANK_SIZE-4.0, 0.0, -1.0),
+                scale: Vec3::new(50.0, 10.0, 0.),
+                translation: Vec3::new(0.0, 40.0, 0.0),
                 ..default()
             },
             ..default()
