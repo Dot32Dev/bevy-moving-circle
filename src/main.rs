@@ -136,6 +136,9 @@ struct DirectionAi {
 #[derive(Component)]
 struct Turret;
 
+#[derive(Component)]
+struct Bearing;
+
 fn create_player(mut commands: Commands) {
     let shape = shapes::RegularPolygon { // Define circle
         sides: 30,
@@ -161,18 +164,28 @@ fn create_player(mut commands: Commands) {
     .insert(DirectionAi { value: 0 } ) // required so that the actual ai can update its direction upon collision
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
-        parent.spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb(0., 0., 0.),
+        parent.spawn_bundle(GeometryBuilder::build_as( // turret swivvel 
+            &shape,
+            DrawMode::Fill(FillMode::color(Color::NONE)),
+            Transform {
+                scale: Vec3::new(1.0, 1.0, 1.0),
+                translation: Vec3::new(0.0, 0.0, 1.0),
                 ..default()
             },
-            transform: Transform {
-                scale: Vec3::new(16.0, 16.0, 0.),
-                translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+        )).insert(Bearing).with_children(|parent| {
+            parent.spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0., 0., 0.),
+                    ..default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(16.0, 16.0, 0.),
+                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+                    ..default()
+                },
                 ..default()
-            },
-            ..default()
-        }).insert(Turret);
+            }).insert(Turret);
+        });
         parent.spawn_bundle(SpriteBundle {
             sprite: Sprite {
                 color: Color::GREEN,
@@ -362,6 +375,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     gunshot_deep: Res<GunshotDeepSound>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
+    mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Player>)>,
 ) {
     let window = windows.get_primary().unwrap();
@@ -373,7 +387,11 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                     // let diff = Vec3::new(vec.x - window.width()/2.0, vec.y - window.height()/2.0, 0.) - player.translation;
                     let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation;
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
-                    player.rotation = Quat::from_rotation_z(angle);
+
+                    for (mut joint, children) in bearing.iter_mut() {
+                        joint.rotation = Quat::from_rotation_z(angle);;
+                    }
+                    // player.rotation = Quat::from_rotation_z(angle);
 
                     for child in children.iter() {
                         if let Ok(mut transform) = transform_query.get_mut(*child) {
