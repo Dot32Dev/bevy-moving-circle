@@ -341,24 +341,24 @@ fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, &mut DirectionAi),
         // }
         // tank.translation.x = tank.translation.x.min(window.width() - window.width()/2.0).max(0.0 - window.width()/2.0);
         // tank.translation.y = tank.translation.y.min(window.height() - window.height()/2.0).max(0.0 - window.height()/2.0);
-        if tank.translation.x > window.width() - window.width()/2.0 {
+        if tank.translation.x + TANK_SIZE > window.width() - window.width()/2.0 {
             velocity.value.x = 0.0;
-            tank.translation.x = window.width()/2.0;
+            tank.translation.x = window.width()/2.0 - TANK_SIZE;
             direction.value = 0;
         }
-        if tank.translation.x < -window.width()/2.0 {
+        if tank.translation.x - TANK_SIZE < -window.width()/2.0 {
             velocity.value.x = 0.0;
-            tank.translation.x = -window.width()/2.0;
+            tank.translation.x = -window.width()/2.0 + TANK_SIZE;
             direction.value = 1;
         }
-        if tank.translation.y > window.height() - window.height()/2.0 {
+        if tank.translation.y + TANK_SIZE > window.height() - window.height()/2.0 {
             velocity.value.y = 0.0;
-            tank.translation.y = window.height()/2.0;
+            tank.translation.y = window.height()/2.0 - TANK_SIZE;
             direction.value = 2;
         }
-        if tank.translation.y < -window.height()/2.0 {
+        if tank.translation.y - TANK_SIZE < -window.height()/2.0 {
             velocity.value.y = 0.0;
-            tank.translation.y = -window.height()/2.0;
+            tank.translation.y = -window.height()/2.0 + TANK_SIZE;
             direction.value = 3;
         }
     }
