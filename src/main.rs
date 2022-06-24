@@ -202,12 +202,24 @@ fn create_player(mut commands: Commands) {
                 ..default()
             },
             transform: Transform {
-                scale: Vec3::new(50.0, 10.0, 0.),
+                scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
                 translation: Vec3::new(0.0, 40.0, 0.0),
                 ..default()
             },
             ..default()
         }).insert(Healthbar);
+        parent.spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgba(0., 0., 0., 0.5),
+                ..default()
+            },
+            transform: Transform {
+                scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
+                translation: Vec3::new(0.0, 40.0, -1.0),
+                ..default()
+            },
+            ..default()
+        });
     });
 }
 
@@ -266,12 +278,24 @@ fn create_enemy(mut commands: Commands) {
                 ..default()
             },
             transform: Transform {
-                scale: Vec3::new(50.0, 10.0, 0.),
+                scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
                 translation: Vec3::new(0.0, 40.0, 0.0),
                 ..default()
             },
             ..default()
         }).insert(Healthbar);
+        parent.spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgba(0., 0., 0., 0.5),
+                ..default()
+            },
+            transform: Transform {
+                scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
+                translation: Vec3::new(0.0, 40.0, -1.0),
+                ..default()
+            },
+            ..default()
+        });
     });
 }
 
