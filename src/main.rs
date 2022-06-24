@@ -8,6 +8,7 @@ use std::env; // Detect OS for OS specific keybinds
 use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
+use bevy_inspector_egui::{WorldInspectorPlugin, Inspectable, RegisterInspectable};
 
 const TIME_STEP: f32 = 1.0 / 120.0; // FPS
 const MUTE: bool = true;
@@ -37,6 +38,8 @@ fn main() {
     .add_plugins_with(DefaultPlugins, |group| {
         group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
     })
+    .add_plugin(WorldInspectorPlugin::new())
+    .register_inspectable::<Health>() // tells bevy-inspector-egui how to display the struct in the world inspector
     .add_plugin(ShapePlugin)
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
@@ -121,7 +124,8 @@ struct AttackTimer {
     value: f32,
 }
 
-#[derive(Component)]
+
+#[derive(Inspectable, Component)]
 struct Health {
     value: u8,
 }

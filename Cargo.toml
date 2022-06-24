@@ -12,6 +12,7 @@ bevy_prototype_lyon = "0.5.0"
 dot32_intro = { git = "https://github.com/Dot32IsCool/dot32-intro-rs"}
 bevy_embedded_assets = "0.3.0"
 rand = "0.5"
+bevy-inspector-egui = "0.10.0"
 
 [profile.release]
 opt-level = 'z'     # Optimize for size.
