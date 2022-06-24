@@ -528,7 +528,7 @@ fn hurt_tanks(
             TurretOf::Player => {
                 for (ai_transform, ai_entity, mut ai_health) in ais.iter_mut() {
                     if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
-                        if ai_health.value > 0 {
+                        if ai_health.value > 1 {
                             ai_health.value -= 1;
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
@@ -544,7 +544,7 @@ fn hurt_tanks(
             TurretOf::Ai => {
                 for (player_transform, player_entity, mut player_health, children) in players.iter_mut() {
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
-                        if player_health.value > 0 {
+                        if player_health.value > 1 {
                             player_health.value -= 1;
                                 for healthbar in children.iter() {
                                     if let Ok(mut transform) = transform_query.get_mut(*healthbar) {
