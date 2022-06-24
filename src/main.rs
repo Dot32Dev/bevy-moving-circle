@@ -238,18 +238,40 @@ fn create_enemy(mut commands: Commands) {
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     // .insert(Target {value: Vec2::new(0.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
+        parent.spawn_bundle(GeometryBuilder::build_as( // turret swivvel 
+            &shape,
+            DrawMode::Fill(FillMode::color(Color::NONE)),
+            Transform {
+                scale: Vec3::new(1.0, 1.0, 1.0),
+                translation: Vec3::new(0.0, 0.0, 0.0),
+                ..default()
+            },
+        )).insert(Bearing).with_children(|parent| {
+            parent.spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0., 0., 0.),
+                    ..default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(16.0, 16.0, 0.),
+                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+                    ..default()
+                },
+                ..default()
+            }).insert(Turret);
+        });
         parent.spawn_bundle(SpriteBundle {
             sprite: Sprite {
-                color: Color::rgb(0., 0., 0.),
+                color: Color::GREEN,
                 ..default()
             },
             transform: Transform {
-                scale: Vec3::new(16.0, 16.0, 0.),
-                translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+                scale: Vec3::new(50.0, 10.0, 0.),
+                translation: Vec3::new(0.0, 40.0, 0.0),
                 ..default()
             },
             ..default()
-        }).insert(Turret);
+        }).insert(Healthbar);
     });
 }
 
@@ -385,7 +407,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     gunshot: Res<GunshotSound>,
     gunshot_deep: Res<GunshotDeepSound>,
     mut commands: Commands,
-    mut positions: Query<(&mut Transform, &mut AttackTimer), With<Player>>,
+    mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
     mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Player>)>,
 ) {
@@ -393,17 +415,20 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     if let Some(_position) = window.cursor_position() {
         match Some(_position) {
             Some(vec) => {
-                for (player, mut attack_timer) in positions.iter_mut() {
+                for (player, mut attack_timer, children) in positions.iter_mut() {
                     let window_size = Vec2::new(window.width(), window.height());
                     // let diff = Vec3::new(vec.x - window.width()/2.0, vec.y - window.height()/2.0, 0.) - player.translation;
                     let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation;
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
 
-                    for (mut joint, turrets) in bearing.iter_mut() {
-                        joint.rotation = Quat::from_rotation_z(angle);
-                        for turret in turrets.iter() {
-                            if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                                transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                    // for (mut joint, turrets) in bearing.iter_mut() {
+                    for child in children.iter() {
+                        if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                            joint.rotation = Quat::from_rotation_z(angle);
+                            for turret in turrets.iter() {
+                                if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                    transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                                }
                             }
                         }
                     }
@@ -414,10 +439,12 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                         }
 
-                        for (_, turrets) in bearing.iter_mut() {
-                            for turret in turrets.iter() {
-                                if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                                    transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                        for child in children.iter() {
+                            if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
+                                for turret in turrets.iter() {
+                                    if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                        transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                                    }
                                 }
                             }
                         }
@@ -521,16 +548,21 @@ fn hurt_tanks(
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
     mut players: Query<(&mut Transform, Entity, &mut Health, &Children), (With<Player>, Without<Ai>, Without<Bullet>)>,
-    mut ais: Query<(&Transform, Entity, &mut Health), (Without<Player>, With<Ai>, Without<Bullet>)>,
+    mut ais: Query<(&Transform, Entity, &mut Health, &Children), (Without<Player>, With<Ai>, Without<Bullet>)>,
     mut transform_query: Query<&mut Transform, (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
 ) {
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
         match bullet_type.from {
             TurretOf::Player => {
-                for (ai_transform, ai_entity, mut ai_health) in ais.iter_mut() {
+                for (ai_transform, ai_entity, mut ai_health, children) in ais.iter_mut() {
                     if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if ai_health.value > 1 {
                             ai_health.value -= 1;
+                            for healthbar in children.iter() {
+                                if let Ok(mut transform) = transform_query.get_mut(*healthbar) {
+                                    transform.scale.x = ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH ;
+                                }
+                            }
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
                         }
@@ -547,11 +579,11 @@ fn hurt_tanks(
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if player_health.value > 1 {
                             player_health.value -= 1;
-                                for healthbar in children.iter() {
-                                    if let Ok(mut transform) = transform_query.get_mut(*healthbar) {
-                                        transform.scale.x = player_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH ;
-                                    }
+                            for healthbar in children.iter() {
+                                if let Ok(mut transform) = transform_query.get_mut(*healthbar) {
+                                    transform.scale.x = player_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH ;
                                 }
+                            }
                         } else {
                             commands.entity(player_entity).despawn_recursive(); 
                         }
