@@ -198,7 +198,7 @@ fn create_player(mut commands: Commands) {
         });
         parent.spawn_bundle(SpriteBundle {
             sprite: Sprite {
-                color: Color::GREEN,
+                color: Color::hsl(150.0, 0.98, 0.58),
                 ..default()
             },
             transform: Transform {
@@ -262,7 +262,7 @@ fn create_enemy(mut commands: Commands) {
         });
         parent.spawn_bundle(SpriteBundle {
             sprite: Sprite {
-                color: Color::GREEN,
+                color: Color::hsl(150.0, 0.98, 0.58),
                 ..default()
             },
             transform: Transform {
@@ -559,7 +559,7 @@ fn hurt_tanks(
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
     mut players: Query<(&mut Transform, Entity, &mut Health, &Children), (With<Player>, Without<Ai>, Without<Bullet>)>,
     mut ais: Query<(&Transform, Entity, &mut Health, &Children), (Without<Player>, With<Ai>, Without<Bullet>)>,
-    mut transform_query: Query<&mut Transform, (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
+    mut healthbar_query: Query<(&mut Transform, &mut Sprite), (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
 ) {
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
         match bullet_type.from {
@@ -569,8 +569,9 @@ fn hurt_tanks(
                         if ai_health.value > 1 {
                             ai_health.value -= 1;
                             for healthbar in children.iter() {
-                                if let Ok(mut transform) = transform_query.get_mut(*healthbar) {
+                                if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
                                     transform.scale.x = ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH ;
+                                    sprite.color = Color::hsl(ai_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
                         } else {
@@ -590,8 +591,9 @@ fn hurt_tanks(
                         if player_health.value > 1 {
                             player_health.value -= 1;
                             for healthbar in children.iter() {
-                                if let Ok(mut transform) = transform_query.get_mut(*healthbar) {
+                                if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
                                     transform.scale.x = player_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH ;
+                                    sprite.color = Color::hsl(player_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
                         } else {
