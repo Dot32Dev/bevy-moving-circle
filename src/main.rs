@@ -17,6 +17,9 @@ const TANK_SIZE: f32 = 20.0;
 
 const BULLET_SIZE: f32 = 6.0; 
 
+const HEALTHBAR_WIDTH: f32 = 50.0;
+const MAX_HEALTH: u8 = 5;
+
 fn main() {
     App::new()
     // .insert_resource(Msaa { samples: 4 })
@@ -139,6 +142,9 @@ struct Turret;
 #[derive(Component)]
 struct Bearing;
 
+#[derive(Component)]
+struct Healthbar;
+
 fn create_player(mut commands: Commands) {
     let shape = shapes::RegularPolygon { // Define circle
         sides: 30,
@@ -160,7 +166,7 @@ fn create_player(mut commands: Commands) {
     .insert(Player)
     .insert(Tank)
     .insert(AttackTimer { value: 0.0 } ) 
-    .insert(Health { value: 5 } ) 
+    .insert(Health { value: MAX_HEALTH } ) 
     .insert(DirectionAi { value: 0 } ) // required so that the actual ai can update its direction upon collision
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
@@ -197,7 +203,7 @@ fn create_player(mut commands: Commands) {
                 ..default()
             },
             ..default()
-        });
+        }).insert(Healthbar);
     });
 }
 
@@ -509,8 +515,9 @@ fn hurt_tanks(
     tank_hit_deep: Res<TankHitDeepSound>,
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
-    mut players: Query<(&mut Transform, Entity, &mut Health), (With<Player>, Without<Ai>, Without<Bullet>)>,
+    mut players: Query<(&mut Transform, Entity, &mut Health, &Children), (With<Player>, Without<Ai>, Without<Bullet>)>,
     mut ais: Query<(&Transform, Entity, &mut Health), (Without<Player>, With<Ai>, Without<Bullet>)>,
+    mut transform_query: Query<&mut Transform, (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
 ) {
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
         match bullet_type.from {
@@ -531,10 +538,15 @@ fn hurt_tanks(
                 }
             }
             TurretOf::Ai => {
-                for (player_transform, player_entity, mut player_health) in players.iter_mut() {
+                for (player_transform, player_entity, mut player_health, children) in players.iter_mut() {
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         if player_health.value > 0 {
                             player_health.value -= 1;
+                                for healthbar in children.iter() {
+                                    if let Ok(mut transform) = transform_query.get_mut(*healthbar) {
+                                        transform.scale.x = player_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH ;
+                                    }
+                                }
                         } else {
                             commands.entity(player_entity).despawn_recursive(); 
                         }
