@@ -374,7 +374,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     gunshot: Res<GunshotSound>,
     gunshot_deep: Res<GunshotDeepSound>,
     mut commands: Commands,
-    mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
+    mut positions: Query<(&mut Transform, &mut AttackTimer), With<Player>>,
     mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Player>)>,
 ) {
@@ -382,7 +382,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     if let Some(_position) = window.cursor_position() {
         match Some(_position) {
             Some(vec) => {
-                for (mut player, mut attack_timer, children) in positions.iter_mut() {
+                for (player, mut attack_timer) in positions.iter_mut() {
                     let window_size = Vec2::new(window.width(), window.height());
                     // let diff = Vec3::new(vec.x - window.width()/2.0, vec.y - window.height()/2.0, 0.) - player.translation;
                     let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation;
@@ -396,14 +396,6 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             }
                         }
                     }
-                    // player.rotation = Quat::from_rotation_z(angle);
-
-                    // for child in children.iter() {
-                    //     if let Ok(mut transform) = transform_query.get_mut(*child) {
-                    //         transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
-                    //     }
-                    // }
-
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
                         attack_timer.value = 0.0;
                         if !MUTE {
@@ -411,12 +403,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                         }
 
-                        // for child in children.iter() {
-                        //     if let Ok(mut transform) = transform_query.get_mut(*child) {
-                        //         transform.translation.x = TANK_SIZE+4.0 - 10.0;
-                        //     }
-                        // }
-                        for (mut joint, turrets) in bearing.iter_mut() {
+                        for (_, turrets) in bearing.iter_mut() {
                             for turret in turrets.iter() {
                                 if let Ok(mut transform) = transform_query.get_mut(*turret) {
                                     transform.translation.x = TANK_SIZE+4.0 - 10.0;
