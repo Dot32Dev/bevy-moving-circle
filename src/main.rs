@@ -8,7 +8,7 @@ use std::env; // Detect OS for OS specific keybinds
 use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
-use bevy_inspector_egui::{WorldInspectorPlugin, Inspectable, RegisterInspectable};
+use bevy_inspector_egui::{WorldInspectorPlugin, Inspectable, RegisterInspectable, WorldInspectorParams};
 
 const TIME_STEP: f32 = 1.0 / 120.0; // FPS
 const MUTE: bool = true;
@@ -40,6 +40,11 @@ fn main() {
     })
     .add_plugin(WorldInspectorPlugin::new())
     .register_inspectable::<Health>() // tells bevy-inspector-egui how to display the struct in the world inspector
+    .insert_resource(WorldInspectorParams {
+        enabled: false,
+        ..Default::default()
+    })
+    .add_system(toggle_inspector)
     .add_plugin(ShapePlugin)
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
@@ -662,6 +667,15 @@ fn kill_bullets(
                 audio.play_with_settings(wall_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
             }
         }
+    }
+}
+
+fn toggle_inspector(
+    input: ResMut<Input<KeyCode>>,
+    mut window_params: ResMut<WorldInspectorParams>,
+) {
+    if input.just_pressed(KeyCode::Grave) {
+        window_params.enabled = !window_params.enabled
     }
 }
 
