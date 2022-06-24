@@ -486,19 +486,25 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     players: Query<&Transform, (Without<Ai>, With<Player>)>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Ai>>,
+    mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Ai>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Ai>, Without<Player>)>,
 ) {
     for player in players.iter() {
-        for (mut ai, mut attack_timer, children) in positions.iter_mut() {
+        for (ai, mut attack_timer, children) in positions.iter_mut() {
             // let window_size = Vec2::new(window.width(), window.height());
             let diff = Vec3::new(player.translation.x, player.translation.y, 0.) - ai.translation;
             // let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - ai.translation;
             let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
-            ai.rotation = Quat::from_rotation_z(angle);
+            // ai.rotation = Quat::from_rotation_z(angle);
 
             for child in children.iter() {
-                if let Ok(mut transform) = transform_query.get_mut(*child) {
-                    transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                    joint.rotation = Quat::from_rotation_z(angle);
+                    for turret in turrets.iter() {
+                        if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                            transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                        }
+                    }
                 }
             }
 
@@ -510,8 +516,12 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 }
 
                 for child in children.iter() {
-                    if let Ok(mut transform) = transform_query.get_mut(*child) {
-                        transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                    if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
+                        for turret in turrets.iter() {
+                            if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                            }
+                        }
                     }
                 }
 
