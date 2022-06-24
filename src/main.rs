@@ -257,18 +257,19 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
     mut positions: Query<(&mut Transform,
     &mut Velocity),
     With<Player>>,
+    time: Res<Time>,
 ) {
     for (mut transform, mut velocity) in positions.iter_mut() {
-        if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
+        if (keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A)) && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
             velocity.value.x -= TANK_SPEED;
         }
-        if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
+        if (keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D)) && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
             velocity.value.x += TANK_SPEED;
         }
-        if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S) {
+        if (keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S)) && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
             velocity.value.y -= TANK_SPEED;
         }
-        if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
+        if (keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W)) && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
             velocity.value.y += TANK_SPEED;
         }
 
@@ -321,16 +322,16 @@ fn ai_movement(
             direction.value = rand::thread_rng().gen_range(0, 4) as u8;
             steps.value = rand::thread_rng().gen_range(1, 110) as f32 / 110.0;
         }
-        if direction.value == 0  {
+        if direction.value == 0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
             velocity.value.x -= TANK_SPEED;
         }
-        if direction.value == 1  {
+        if direction.value == 1 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
             velocity.value.x += TANK_SPEED;
         }
-        if direction.value == 2  {
+        if direction.value == 2 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
             velocity.value.y -= TANK_SPEED;
         }
-        if direction.value == 3  {
+        if direction.value == 3 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
             velocity.value.y += TANK_SPEED;
         }
 
@@ -406,7 +407,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             }
                         }
                     }
-                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4 {
+                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4  && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
                         attack_timer.value = 0.0;
                         if !MUTE {
                             audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
@@ -474,7 +475,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 }
             }
 
-            if attack_timer.value < 0.0 {
+            if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 {
                 attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
                 if !MUTE {
                     audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
