@@ -594,7 +594,8 @@ fn hurt_tanks(
                             ai_health.value -= 1;
                             for healthbar in children.iter() {
                                 if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
-                                    transform.scale.x = ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH ;
+                                    transform.scale.x = ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH;
+                                    transform.translation.x -= HEALTHBAR_WIDTH / MAX_HEALTH as f32 / 2.0;
                                     sprite.color = Color::hsl(ai_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
@@ -616,7 +617,8 @@ fn hurt_tanks(
                             player_health.value -= 1;
                             for healthbar in children.iter() {
                                 if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
-                                    transform.scale.x = player_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH ;
+                                    transform.scale.x = player_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH;
+                                    transform.translation.x -= HEALTHBAR_WIDTH / MAX_HEALTH as f32 / 2.0;
                                     sprite.color = Color::hsl(player_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
