@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use bevy::prelude::*;
 use bevy::window::*;
 use bevy::app::AppExit; // For MacOS CMD+W to quit keybind
@@ -110,6 +112,11 @@ struct Tank;
 #[derive(Component)]
 struct Velocity {
     value: Vec2,
+}
+
+#[derive(Component)]
+struct Active {
+    value: bool,
 }
 
 enum TurretOf {
@@ -254,6 +261,7 @@ fn create_enemy(mut commands: Commands) {
             },
         ))
         .insert(Ai)
+        .insert(Active { value: true})
         .insert(Tank)
         .insert(AttackTimer { value: 0.0 } ) 
         .insert(Health { value: 5 } ) 
@@ -374,23 +382,23 @@ fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, &mut DirectionAi),
 
 fn ai_movement(
     time: Res<Time>,
-    mut positions: Query<(&mut Transform, &mut Velocity, &mut Steps, &mut DirectionAi), With<Ai>>,
+    mut positions: Query<(&mut Transform, &mut Velocity, &mut Steps, &mut DirectionAi, &Active), With<Ai>>,
 ) {
-    for (mut transform, mut velocity, mut steps, mut direction) in positions.iter_mut() {
+    for (mut transform, mut velocity, mut steps, mut direction, active) in positions.iter_mut() {
         if steps.value < 0.0 {
             direction.value = rand::thread_rng().gen_range(0, 4) as u8;
             steps.value = rand::thread_rng().gen_range(1, 110) as f32 / 110.0;
         }
-        if direction.value == 0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+        if direction.value == 0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
             velocity.value.x -= TANK_SPEED;
         }
-        if direction.value == 1 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+        if direction.value == 1 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
             velocity.value.x += TANK_SPEED;
         }
-        if direction.value == 2 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+        if direction.value == 2 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
             velocity.value.y -= TANK_SPEED;
         }
-        if direction.value == 3 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+        if direction.value == 3 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
             velocity.value.y += TANK_SPEED;
         }
 
@@ -522,21 +530,79 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     gunshot_deep: Res<GunshotDeepSound>,
     players: Query<&Transform, (Without<Ai>, With<Player>)>,
     mut commands: Commands,
-    mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Ai>>,
+    mut positions: Query<(&mut Transform, &mut AttackTimer, &Children, &mut Active), With<Ai>>,
     mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Ai>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Ai>, Without<Player>)>,
 ) {
-    for player in players.iter() {
-        for (ai, mut attack_timer, children) in positions.iter_mut() {
-            // let window_size = Vec2::new(window.width(), window.height());
-            let diff = Vec3::new(player.translation.x, player.translation.y, 0.) - ai.translation;
-            // let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - ai.translation;
-            let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
-            // ai.rotation = Quat::from_rotation_z(angle);
+    for (ai, mut attack_timer, children, mut active) in positions.iter_mut() {
+        if active.value == true {
+            let mut player_count = 0;
+            for player in players.iter() {
+                // let window_size = Vec2::new(window.width(), window.height());
+                let diff = Vec3::new(player.translation.x, player.translation.y, 0.) - ai.translation;
+                // let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - ai.translation;
+                let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
+                // ai.rotation = Quat::from_rotation_z(angle);
 
+                for child in children.iter() {
+                    if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                        joint.rotation = Quat::from_rotation_z(angle);
+                        for turret in turrets.iter() {
+                            if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                            }
+                        }
+                    }
+                }
+
+                if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 {
+                    attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
+                    if !MUTE {
+                        audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                    }
+
+                    for child in children.iter() {
+                        if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
+                            for turret in turrets.iter() {
+                                if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                    transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                                }
+                            }
+                        }
+                    }
+
+                    // println!("x{}, y{}", player.translation.x, player.translation.y);
+                    let shape = shapes::RegularPolygon {
+                        sides: 30,
+                        feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
+                        ..shapes::RegularPolygon::default()
+                    };
+                    commands.spawn_bundle(GeometryBuilder::build_as(
+                        &shape,
+                        DrawMode::Fill (
+                            FillMode::color(Color::BLACK),
+                        ),
+                        Transform {
+                            translation: Vec3::new(ai.translation.x, ai.translation.y, 0.0),
+                            ..default()
+                        },
+                    )).insert(Bullet {from: TurretOf::Ai} )
+                    // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
+                    .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
+                }
+
+                if LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 {
+                    attack_timer.value -= time.delta_seconds();
+                }
+                player_count += 1;
+            }
+            if player_count == 0 {
+                active.value = false;
+            }
+        } else {
             for child in children.iter() {
-                if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                    joint.rotation = Quat::from_rotation_z(angle);
+                if let Ok((mut _joint, turrets)) = bearing.get_mut(*child) {
                     for turret in turrets.iter() {
                         if let Ok(mut transform) = transform_query.get_mut(*turret) {
                             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
@@ -544,45 +610,6 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                     }
                 }
             }
-
-            if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 {
-                attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
-                if !MUTE {
-                    audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                    audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                }
-
-                for child in children.iter() {
-                    if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
-                        for turret in turrets.iter() {
-                            if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                                transform.translation.x = TANK_SIZE+4.0 - 10.0;
-                            }
-                        }
-                    }
-                }
-
-                // println!("x{}, y{}", player.translation.x, player.translation.y);
-                let shape = shapes::RegularPolygon {
-                    sides: 30,
-                    feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
-                    ..shapes::RegularPolygon::default()
-                };
-                commands.spawn_bundle(GeometryBuilder::build_as(
-                    &shape,
-                    DrawMode::Fill (
-                        FillMode::color(Color::BLACK),
-                    ),
-                    Transform {
-                        translation: Vec3::new(ai.translation.x, ai.translation.y, 0.0),
-                        ..default()
-                    },
-                )).insert(Bullet {from: TurretOf::Ai} )
-                // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
-                .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
-            }
-
-            attack_timer.value -= time.delta_seconds()
         }
     }
 
