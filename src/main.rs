@@ -241,73 +241,75 @@ fn create_enemy(mut commands: Commands) {
         ..shapes::RegularPolygon::default()
     };
 
-    commands.spawn_bundle(GeometryBuilder::build_as(
-        &shape,
-        DrawMode::Outlined {
-            fill_mode: FillMode::color(Color::ORANGE),
-            outline_mode: StrokeMode::new(Color::BLACK, 4.0),
-        },
-        Transform {
-            translation: Vec3::new(0.0, 0.0, 1.0),
-            ..default()
-        },
-    ))
-    .insert(Ai)
-    .insert(Tank)
-    .insert(AttackTimer { value: 0.0 } ) 
-    .insert(Health { value: 5 } ) 
-    .insert(Steps { value: 0.0 } ) 
-    .insert(DirectionAi { value: 0 } ) 
-    .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
-    // .insert(Target {value: Vec2::new(0.0, 0.0) } )
-    .with_children(|parent| { // Add turret to player
-        parent.spawn_bundle(GeometryBuilder::build_as( // turret swivvel 
+    for _ in 0..2 {
+        commands.spawn_bundle(GeometryBuilder::build_as(
             &shape,
-            DrawMode::Fill(FillMode::color(Color::NONE)),
+            DrawMode::Outlined {
+                fill_mode: FillMode::color(Color::ORANGE),
+                outline_mode: StrokeMode::new(Color::BLACK, 4.0),
+            },
             Transform {
-                scale: Vec3::new(1.0, 1.0, 1.0),
-                translation: Vec3::new(0.0, 0.0, 0.0),
+                translation: Vec3::new(0.0, 0.0, 1.0),
                 ..default()
             },
-        )).insert(Bearing).with_children(|parent| {
+        ))
+        .insert(Ai)
+        .insert(Tank)
+        .insert(AttackTimer { value: 0.0 } ) 
+        .insert(Health { value: 5 } ) 
+        .insert(Steps { value: 0.0 } ) 
+        .insert(DirectionAi { value: 0 } ) 
+        .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
+        // .insert(Target {value: Vec2::new(0.0, 0.0) } )
+        .with_children(|parent| { // Add turret to player
+            parent.spawn_bundle(GeometryBuilder::build_as( // turret swivvel 
+                &shape,
+                DrawMode::Fill(FillMode::color(Color::NONE)),
+                Transform {
+                    scale: Vec3::new(1.0, 1.0, 1.0),
+                    translation: Vec3::new(0.0, 0.0, 0.0),
+                    ..default()
+                },
+            )).insert(Bearing).with_children(|parent| {
+                parent.spawn_bundle(SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::rgb(0., 0., 0.),
+                        ..default()
+                    },
+                    transform: Transform {
+                        scale: Vec3::new(16.0, 16.0, 0.),
+                        translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+                        ..default()
+                    },
+                    ..default()
+                }).insert(Turret);
+            });
             parent.spawn_bundle(SpriteBundle {
                 sprite: Sprite {
-                    color: Color::rgb(0., 0., 0.),
+                    color: Color::hsl(150.0, 0.98, 0.58),
                     ..default()
                 },
                 transform: Transform {
-                    scale: Vec3::new(16.0, 16.0, 0.),
-                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+                    scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
+                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
                     ..default()
                 },
                 ..default()
-            }).insert(Turret);
+            }).insert(Healthbar);
+            parent.spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgba(0., 0., 0., 0.5),
+                    ..default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
+                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
+                    ..default()
+                },
+                ..default()
+            }).insert(HealthbarBorder);
         });
-        parent.spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::hsl(150.0, 0.98, 0.58),
-                ..default()
-            },
-            transform: Transform {
-                scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
-                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
-                ..default()
-            },
-            ..default()
-        }).insert(Healthbar);
-        parent.spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgba(0., 0., 0., 0.5),
-                ..default()
-            },
-            transform: Transform {
-                scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
-                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
-                ..default()
-            },
-            ..default()
-        }).insert(HealthbarBorder);
-    });
+    }
 }
 
 fn movement(keyboard_input: Res<Input<KeyCode>>,
