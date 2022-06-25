@@ -20,6 +20,7 @@ const BULLET_SIZE: f32 = 6.0;
 
 const HEALTHBAR_WIDTH: f32 = 50.0;
 const MAX_HEALTH: u8 = 5;
+const HEALTHBAR_Y_OFFSET: f32 = 40.0;
 
 fn main() {
     App::new()
@@ -50,6 +51,7 @@ fn main() {
     .add_system(mouse_button_input)
     .add_system(ai_rotate)
     .add_system(collision)
+    .add_system(keep_healthbars_on_screen)
     .add_system(kill_bullets)
     .add_system(hurt_tanks)
     .add_system_set(
@@ -154,6 +156,9 @@ struct Bearing;
 #[derive(Component)]
 struct Healthbar;
 
+#[derive(Component)]
+struct HealthbarBorder;
+
 fn create_player(mut commands: Commands) {
     let shape = shapes::RegularPolygon { // Define circle
         sides: 30,
@@ -208,7 +213,7 @@ fn create_player(mut commands: Commands) {
             },
             transform: Transform {
                 scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
-                translation: Vec3::new(0.0, 40.0, 0.0),
+                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.0),
                 ..default()
             },
             ..default()
@@ -220,11 +225,11 @@ fn create_player(mut commands: Commands) {
             },
             transform: Transform {
                 scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
-                translation: Vec3::new(0.0, 40.0, -1.0),
+                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, -1.0),
                 ..default()
             },
             ..default()
-        });
+        }).insert(HealthbarBorder);
     });
 }
 
@@ -300,7 +305,7 @@ fn create_enemy(mut commands: Commands) {
                 ..default()
             },
             ..default()
-        });
+        }).insert(HealthbarBorder);
     });
 }
 
@@ -330,8 +335,8 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
     }
 }
 
-fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, &mut DirectionAi), With<Tank>>, mut windows: ResMut<Windows>,) {
-    let window = windows.get_primary_mut().unwrap();
+fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, &mut DirectionAi), With<Tank>>, windows: ResMut<Windows>,) {
+    let window = windows.get_primary().unwrap();
     for (mut tank, mut velocity, mut direction) in tanks.iter_mut() {
         // if tank.translation.x > window.width() - window.width()/2.0 || tank.translation.x < 0.0  - window.width()/2.0 {
         //     velocity.value.x = 0.0;
@@ -578,6 +583,25 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
         }
     }
 
+}
+
+fn keep_healthbars_on_screen(
+    mut healthbar: Query<(&mut Transform, &GlobalTransform), (With<Healthbar>, Without<HealthbarBorder>)>,
+    mut healthbar_border: Query<(&mut Transform, &GlobalTransform), (With<HealthbarBorder>, Without<Healthbar>)>,
+    windows: ResMut<Windows>,
+) {
+    let window = windows.get_primary().unwrap();
+
+    for (mut transform, global_transform) in healthbar.iter_mut() {
+        let ceiling = window.height()/2.0 - 18.0/2.0;
+        let player_height = global_transform.translation.y - transform.translation.y;
+        transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
+    }
+    for (mut transform, global_transform) in healthbar_border.iter_mut() {
+        let ceiling = window.height()/2.0 - 18.0/2.0;
+        let player_height = global_transform.translation.y - transform.translation.y;
+        transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
+    }
 }
 
 fn hurt_tanks(
