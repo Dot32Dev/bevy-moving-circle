@@ -2,6 +2,7 @@
 name = "moving-a-player"
 version = "0.1.0"
 edition = "2021"
+description = "A top-down game about moving a player"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,3 +21,9 @@ lto = true          # Enable Link Time Optimization
 codegen-units = 1   # Reduce number of codegen units to increase optimizations.
 panic = 'abort'     # Abort on panic
 strip = true        # Strip symbols from binary*
+
+[package.metadata.bundle]
+name = "Tiny Tank RS"
+identifier = "com.tinytank.rs"
+short_description = "A top-down shooter game"
+category = "Game"
