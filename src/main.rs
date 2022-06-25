@@ -213,7 +213,7 @@ fn create_player(mut commands: Commands) {
             },
             transform: Transform {
                 scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
-                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.0),
+                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
                 ..default()
             },
             ..default()
@@ -225,7 +225,7 @@ fn create_player(mut commands: Commands) {
             },
             transform: Transform {
                 scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
-                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, -1.0),
+                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
                 ..default()
             },
             ..default()
@@ -289,7 +289,7 @@ fn create_enemy(mut commands: Commands) {
             },
             transform: Transform {
                 scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
-                translation: Vec3::new(0.0, 40.0, 0.0),
+                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
                 ..default()
             },
             ..default()
@@ -301,7 +301,7 @@ fn create_enemy(mut commands: Commands) {
             },
             transform: Transform {
                 scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
-                translation: Vec3::new(0.0, 40.0, -1.0),
+                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
                 ..default()
             },
             ..default()
