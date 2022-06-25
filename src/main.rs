@@ -17,6 +17,7 @@ const TANK_SPEED: f32 = 0.37;
 const TANK_SIZE: f32 = 20.0; 
 
 const BULLET_SIZE: f32 = 6.0; 
+const KNOCKBACK: f32 = 5.0;
 
 const HEALTHBAR_WIDTH: f32 = 50.0;
 const MAX_HEALTH: u8 = 5;
@@ -610,15 +611,18 @@ fn hurt_tanks(
     tank_hit_deep: Res<TankHitDeepSound>,
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
-    mut players: Query<(&mut Transform, Entity, &mut Health, &Children), (With<Player>, Without<Ai>, Without<Bullet>)>,
-    mut ais: Query<(&Transform, Entity, &mut Health, &Children), (Without<Player>, With<Ai>, Without<Bullet>)>,
+    mut ais: Query<(&Transform, Entity, &mut Health, &Children, &mut Velocity), (Without<Player>, With<Ai>, Without<Bullet>)>,
+    mut players: Query<(&mut Transform, Entity, &mut Health, &Children, &mut Velocity), (With<Player>, Without<Ai>, Without<Bullet>)>,
     mut healthbar_query: Query<(&mut Transform, &mut Sprite), (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
 ) {
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
         match bullet_type.from {
             TurretOf::Player => {
-                for (ai_transform, ai_entity, mut ai_health, children) in ais.iter_mut() {
+                for (ai_transform, ai_entity, mut ai_health, children, mut velocity) in ais.iter_mut() {
                     if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
+                        let knockback = (ai_transform.translation - bullet_transform.translation).truncate().normalize()*KNOCKBACK;
+                        velocity.value += knockback;
+
                         if ai_health.value > 1 {
                             ai_health.value -= 1;
                             for healthbar in children.iter() {
@@ -640,8 +644,11 @@ fn hurt_tanks(
                 }
             }
             TurretOf::Ai => {
-                for (player_transform, player_entity, mut player_health, children) in players.iter_mut() {
+                for (player_transform, player_entity, mut player_health, children, mut velocity) in players.iter_mut() {
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
+                        let knockback = (player_transform.translation - bullet_transform.translation).truncate().normalize()*KNOCKBACK;
+                        velocity.value += knockback;
+
                         if player_health.value > 1 {
                             player_health.value -= 1;
                             for healthbar in children.iter() {
