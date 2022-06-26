@@ -108,8 +108,15 @@ struct Player;
 #[derive(Component)]
 struct Ai;
 
+enum TankType {
+    Player,
+    Ai
+}
+
 #[derive(Component)]
-struct Tank;
+struct Tank {
+    from: TankType,
+}
 
 #[derive(Component)]
 struct Velocity {
@@ -169,15 +176,51 @@ struct Healthbar;
 #[derive(Component)]
 struct HealthbarBorder;
 
-// #[derive(Bundle)]
-// struct TankBundle {
-//     #[bundle]
-//     sprite_bundle: SpriteBundle,
-//     tank: Tank,
-//     attack_timer: AttackTimer,
-//     health: Health,
-//     velocity: Velocity,
-// }
+#[derive(Bundle)]
+struct TankBundle {
+    #[bundle]
+    geometry_builder: bevy_prototype_lyon::entity::ShapeBundle,
+    tank: Tank,
+    attack_timer: AttackTimer,
+    health: Health,
+    velocity: Velocity,
+}
+
+impl TankBundle {
+    fn new(tank: TankType) -> TankBundle {
+        let shape = shapes::RegularPolygon { // Define circle
+            sides: 30,
+            feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
+            ..shapes::RegularPolygon::default()
+        };
+
+        TankBundle {
+            geometry_builder: GeometryBuilder::build_as(
+                &shape,
+                DrawMode::Outlined {
+                    fill_mode: FillMode::color(Color::rgb(0.35, 0.6, 0.99)),
+                    outline_mode: StrokeMode::new(Color::BLACK, 4.0),
+                },
+                Transform {
+                    translation: Vec3::new(0.0, 0.0, 1.0),
+                    ..default()
+                },
+            ),
+            tank: Tank {
+                from: tank,
+            },
+            attack_timer: AttackTimer {
+                value: 0.0,
+            },
+            health: Health {
+                value: MAX_HEALTH,
+            },
+            velocity: Velocity {
+                value: Vec2::new(0.0, 0.0),
+            },
+        }
+    }
+}
 
 fn create_player(mut commands: Commands) {
     let shape = shapes::RegularPolygon { // Define circle
@@ -198,7 +241,7 @@ fn create_player(mut commands: Commands) {
         },
     ))
     .insert(Player)
-    .insert(Tank)
+    .insert(Tank { from: TankType::Player })
     .insert(AttackTimer { value: 0.0 } ) 
     .insert(Health { value: MAX_HEALTH } ) 
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
@@ -273,7 +316,7 @@ fn create_enemy(mut commands: Commands) {
         ))
         .insert(Ai)
         .insert(Active { value: true})
-        .insert(Tank)
+        .insert(Tank { from: TankType::Ai })
         .insert(AttackTimer { value: 0.0 } ) 
         .insert(Health { value: 5 } ) 
         .insert(Steps { value: 0.0 } ) 
