@@ -1,5 +1,7 @@
 #![windows_subsystem = "windows"]
 
+// TODO: Ai only dodge when there are player bullets in the scene?
+
 use bevy::prelude::*;
 use bevy::window::*;
 use bevy::app::AppExit; // For MacOS CMD+W to quit keybind
@@ -167,6 +169,16 @@ struct Healthbar;
 #[derive(Component)]
 struct HealthbarBorder;
 
+// #[derive(Bundle)]
+// struct TankBundle {
+//     #[bundle]
+//     sprite_bundle: SpriteBundle,
+//     tank: Tank,
+//     attack_timer: AttackTimer,
+//     health: Health,
+//     velocity: Velocity,
+// }
+
 fn create_player(mut commands: Commands) {
     let shape = shapes::RegularPolygon { // Define circle
         sides: 30,
@@ -189,7 +201,6 @@ fn create_player(mut commands: Commands) {
     .insert(Tank)
     .insert(AttackTimer { value: 0.0 } ) 
     .insert(Health { value: MAX_HEALTH } ) 
-    .insert(DirectionAi { value: 0 } ) // required so that the actual ai can update its direction upon collision
     .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
     .with_children(|parent| { // Add turret to player
         parent.spawn_bundle(GeometryBuilder::build_as( // turret swivvel 
@@ -346,36 +357,40 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
     }
 }
 
-fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, &mut DirectionAi), With<Tank>>, windows: ResMut<Windows>,) {
+fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, Option<&mut DirectionAi>), With<Tank>>, windows: ResMut<Windows>,) {
     let window = windows.get_primary().unwrap();
-    for (mut tank, mut velocity, mut direction) in tanks.iter_mut() {
-        // if tank.translation.x > window.width() - window.width()/2.0 || tank.translation.x < 0.0  - window.width()/2.0 {
-        //     velocity.value.x = 0.0;
-        // }
-        // if tank.translation.y > window.height() - window.height()/2.0 || tank.translation.y < 0.0 - window.height()/2.0 {
-        //     velocity.value.y = 0.0;
-        // }
-        // tank.translation.x = tank.translation.x.min(window.width() - window.width()/2.0).max(0.0 - window.width()/2.0);
-        // tank.translation.y = tank.translation.y.min(window.height() - window.height()/2.0).max(0.0 - window.height()/2.0);
+    for (mut tank, mut velocity, direction) in tanks.iter_mut() {
+
+        let mut tempdir = 5;
+
         if tank.translation.x + TANK_SIZE > window.width() - window.width()/2.0 {
             velocity.value.x = 0.0;
             tank.translation.x = window.width()/2.0 - TANK_SIZE;
-            direction.value = 0;
+            tempdir = 0;
         }
         if tank.translation.x - TANK_SIZE < -window.width()/2.0 {
             velocity.value.x = 0.0;
             tank.translation.x = -window.width()/2.0 + TANK_SIZE;
-            direction.value = 1;
+            tempdir = 1;
         }
         if tank.translation.y + TANK_SIZE > window.height() - window.height()/2.0 {
             velocity.value.y = 0.0;
             tank.translation.y = window.height()/2.0 - TANK_SIZE;
-            direction.value = 2;
+            tempdir = 2;
         }
         if tank.translation.y - TANK_SIZE < -window.height()/2.0 {
             velocity.value.y = 0.0;
             tank.translation.y = -window.height()/2.0 + TANK_SIZE;
-            direction.value = 3;
+            tempdir = 3;
+        }
+
+        match direction {
+            Some(mut x) => {
+                if tempdir < 5 {
+                    x.value = tempdir;
+                }
+            },
+            None    => (),
         }
     }
 }
@@ -631,6 +646,10 @@ fn keep_healthbars_on_screen(
         let ceiling = window.height()/2.0 - 18.0/2.0;
         let player_height = global_transform.translation.y - transform.translation.y;
         transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
+
+        // let ceiling = window.width()/2.0 - 18.0/2.0;
+        // let player_x = global_transform.translation.x - transform.translation.x;
+        // transform.translation.x = (ceiling - player_x).min(0.0);
     }
 }
 
@@ -658,6 +677,7 @@ fn hurt_tanks(
                                 if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
                                     transform.scale.x = ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH;
                                     transform.translation.x -= HEALTHBAR_WIDTH / MAX_HEALTH as f32 / 2.0;
+                                    // transform.translation.x = 0.0 - ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH / 2.0;
                                     sprite.color = Color::hsl(ai_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
