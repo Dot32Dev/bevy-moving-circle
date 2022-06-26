@@ -108,15 +108,8 @@ struct Player;
 #[derive(Component)]
 struct Ai;
 
-enum TankType {
-    Player,
-    Ai
-}
-
 #[derive(Component)]
-struct Tank {
-    from: TankType,
-}
+struct Tank;
 
 #[derive(Component)]
 struct Velocity {
@@ -186,8 +179,124 @@ struct TankBundle {
     velocity: Velocity,
 }
 
+#[derive(Bundle)]
+struct AiBundle {
+    ai: Ai,
+    active: Active,
+    steps: Steps,
+    direction_ai: DirectionAi,
+}
+
+#[derive(Bundle)]
+struct HealthbarBundle {
+    #[bundle]
+    sprite_bundle: SpriteBundle,
+    healthbar: Healthbar,
+}
+
+impl HealthbarBundle {
+    fn new() -> HealthbarBundle {
+        HealthbarBundle {
+            sprite_bundle: SpriteBundle {
+                sprite: Sprite {
+                    color: Color::hsl(150.0, 0.98, 0.58),
+                    ..default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
+                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
+                    ..default()
+                },
+                ..default()
+            },
+            healthbar: Healthbar,
+        }
+    }
+}
+
+#[derive(Bundle)]
+struct HealthbarBorderBundle {
+    #[bundle]
+    sprite_bundle: SpriteBundle,
+    healthbar_border: HealthbarBorder,
+}
+
+impl HealthbarBorderBundle {
+    fn new() -> HealthbarBorderBundle {
+        HealthbarBorderBundle {
+            sprite_bundle: SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgba(0., 0., 0., 0.5),
+                    ..default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
+                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
+                    ..default()
+                },
+                ..default()
+            },
+            healthbar_border: HealthbarBorder,
+        }
+    }
+}
+
+#[derive(Bundle)]
+struct BearingBundle {
+    #[bundle]
+    sprite_bundle: SpriteBundle,
+    bearing: Bearing,
+}
+
+impl BearingBundle {
+    fn new() -> BearingBundle {
+        BearingBundle {
+            sprite_bundle: SpriteBundle {
+                sprite: Sprite {
+                    color: Color::NONE,
+                    ..default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(1.0, 1.0, 1.0),
+                    translation: Vec3::new(0.0, 0.0, 0.),
+                    ..default()
+                },
+                ..default()
+            },
+            bearing: Bearing,
+        }
+    }
+}
+
+#[derive(Bundle)]
+struct TurretBundle {
+    #[bundle]
+    sprite_bundle: SpriteBundle,
+    turret: Turret,
+}
+
+impl TurretBundle {
+    fn new() -> TurretBundle {
+        TurretBundle {
+            sprite_bundle: SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0., 0., 0.),
+                    ..default()
+                },
+                transform: Transform {
+                    scale: Vec3::new(16.0, 16.0, 0.),
+                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
+                    ..default()
+                },
+                ..default()
+            },
+            turret: Turret,
+        }
+    }
+}
+
 impl TankBundle {
-    fn new(tank: TankType) -> TankBundle {
+    fn new(colour: Color) -> TankBundle {
         let shape = shapes::RegularPolygon { // Define circle
             sides: 30,
             feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
@@ -198,7 +307,7 @@ impl TankBundle {
             geometry_builder: GeometryBuilder::build_as(
                 &shape,
                 DrawMode::Outlined {
-                    fill_mode: FillMode::color(Color::rgb(0.35, 0.6, 0.99)),
+                    fill_mode: FillMode::color(colour),
                     outline_mode: StrokeMode::new(Color::BLACK, 4.0),
                 },
                 Transform {
@@ -206,9 +315,7 @@ impl TankBundle {
                     ..default()
                 },
             ),
-            tank: Tank {
-                from: tank,
-            },
+            tank: Tank,
             attack_timer: AttackTimer {
                 value: 0.0,
             },
@@ -222,154 +329,47 @@ impl TankBundle {
     }
 }
 
-fn create_player(mut commands: Commands) {
-    let shape = shapes::RegularPolygon { // Define circle
-        sides: 30,
-        feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
-        ..shapes::RegularPolygon::default()
-    };
+impl AiBundle {
+    fn new() -> AiBundle {
+        AiBundle {
+            active: Active {
+                value: true,
+            },
+            steps: Steps {
+                value: 0.0,
+            },
+            direction_ai: DirectionAi {
+                value: 0,
+            },
+            ai: Ai,
+        }
+    }
+}
 
-    commands.spawn_bundle(GeometryBuilder::build_as(
-        &shape,
-        DrawMode::Outlined {
-            fill_mode: FillMode::color(Color::rgb(0.35, 0.6, 0.99)),
-            outline_mode: StrokeMode::new(Color::BLACK, 4.0),
-        },
-        Transform {
-            translation: Vec3::new(0.0, 0.0, 1.0),
-            ..default()
-        },
-    ))
+fn create_player(mut commands: Commands) {
+    commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
     .insert(Player)
-    .insert(Tank { from: TankType::Player })
-    .insert(AttackTimer { value: 0.0 } ) 
-    .insert(Health { value: MAX_HEALTH } ) 
-    .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
-    .with_children(|parent| { // Add turret to player
-        parent.spawn_bundle(GeometryBuilder::build_as( // turret swivvel 
-            &shape,
-            DrawMode::Fill(FillMode::color(Color::NONE)),
-            Transform {
-                scale: Vec3::new(1.0, 1.0, 1.0),
-                translation: Vec3::new(0.0, 0.0, 0.0),
-                ..default()
-            },
-        )).insert(Bearing).with_children(|parent| {
-            parent.spawn_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgb(0., 0., 0.),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(16.0, 16.0, 0.),
-                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
-                    ..default()
-                },
-                ..default()
-            }).insert(Turret);
+    .with_children(|parent| {
+        parent.spawn_bundle(BearingBundle::new())
+        .with_children(|parent| {
+            parent.spawn_bundle(TurretBundle::new());
         });
-        parent.spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::hsl(150.0, 0.98, 0.58),
-                ..default()
-            },
-            transform: Transform {
-                scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
-                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
-                ..default()
-            },
-            ..default()
-        }).insert(Healthbar);
-        parent.spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgba(0., 0., 0., 0.5),
-                ..default()
-            },
-            transform: Transform {
-                scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
-                translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
-                ..default()
-            },
-            ..default()
-        }).insert(HealthbarBorder);
+        parent.spawn_bundle(HealthbarBundle::new());
+        parent.spawn_bundle(HealthbarBorderBundle::new());
     });
 }
 
 fn create_enemy(mut commands: Commands) {
-    let shape = shapes::RegularPolygon { // Define circle
-        sides: 30,
-        feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
-        ..shapes::RegularPolygon::default()
-    };
-
     for _ in 0..2 {
-        commands.spawn_bundle(GeometryBuilder::build_as(
-            &shape,
-            DrawMode::Outlined {
-                fill_mode: FillMode::color(Color::ORANGE),
-                outline_mode: StrokeMode::new(Color::BLACK, 4.0),
-            },
-            Transform {
-                translation: Vec3::new(0.0, 0.0, 1.0),
-                ..default()
-            },
-        ))
-        .insert(Ai)
-        .insert(Active { value: true})
-        .insert(Tank { from: TankType::Ai })
-        .insert(AttackTimer { value: 0.0 } ) 
-        .insert(Health { value: 5 } ) 
-        .insert(Steps { value: 0.0 } ) 
-        .insert(DirectionAi { value: 0 } ) 
-        .insert(Velocity { value: Vec2::new(2.0, 0.0) } )
-        // .insert(Target {value: Vec2::new(0.0, 0.0) } )
-        .with_children(|parent| { // Add turret to player
-            parent.spawn_bundle(GeometryBuilder::build_as( // turret swivvel 
-                &shape,
-                DrawMode::Fill(FillMode::color(Color::NONE)),
-                Transform {
-                    scale: Vec3::new(1.0, 1.0, 1.0),
-                    translation: Vec3::new(0.0, 0.0, 0.0),
-                    ..default()
-                },
-            )).insert(Bearing).with_children(|parent| {
-                parent.spawn_bundle(SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::rgb(0., 0., 0.),
-                        ..default()
-                    },
-                    transform: Transform {
-                        scale: Vec3::new(16.0, 16.0, 0.),
-                        translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
-                        ..default()
-                    },
-                    ..default()
-                }).insert(Turret);
+        commands.spawn_bundle(TankBundle::new(Color::ORANGE))
+        .insert_bundle(AiBundle::new())
+        .with_children(|parent| {
+            parent.spawn_bundle(BearingBundle::new())
+            .with_children(|parent| {
+                parent.spawn_bundle(TurretBundle::new());
             });
-            parent.spawn_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: Color::hsl(150.0, 0.98, 0.58),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
-                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
-                    ..default()
-                },
-                ..default()
-            }).insert(Healthbar);
-            parent.spawn_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgba(0., 0., 0., 0.5),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
-                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
-                    ..default()
-                },
-                ..default()
-            }).insert(HealthbarBorder);
+            parent.spawn_bundle(HealthbarBundle::new());
+            parent.spawn_bundle(HealthbarBorderBundle::new());
         });
     }
 }
