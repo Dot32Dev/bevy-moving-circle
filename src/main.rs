@@ -2,6 +2,8 @@
 
 // TODO: Ai only dodge when there are player bullets in the scene?
 
+mod tanks;
+
 use bevy::prelude::*;
 use bevy::window::*;
 use bevy::app::AppExit; // For MacOS CMD+W to quit keybind
@@ -12,20 +14,14 @@ use std::env; // Detect OS for OS specific keybinds
 use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
-use bevy_inspector_egui::{WorldInspectorPlugin, Inspectable, RegisterInspectable, WorldInspectorParams};
+use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
+use tanks::*;
 
 const TIME_STEP: f32 = 1.0 / 120.0; // FPS
 const MUTE: bool = true;
 
-const TANK_SPEED: f32 = 0.37;
-const TANK_SIZE: f32 = 20.0; 
-
 const BULLET_SIZE: f32 = 6.0; 
 const KNOCKBACK: f32 = 5.0;
-
-const HEALTHBAR_WIDTH: f32 = 50.0;
-const MAX_HEALTH: u8 = 5;
-const HEALTHBAR_Y_OFFSET: f32 = 40.0;
 
 fn main() {
     App::new()
@@ -102,25 +98,6 @@ struct TankHitDeepSound(Handle<AudioSource>);
 struct WallHitSound(Handle<AudioSource>);
 struct WallHitDeepSound(Handle<AudioSource>);
 
-#[derive(Component)]
-struct Player;
-
-#[derive(Component)]
-struct Ai;
-
-#[derive(Component)]
-struct Tank;
-
-#[derive(Component)]
-struct Velocity {
-    value: Vec2,
-}
-
-#[derive(Component)]
-struct Active {
-    value: bool,
-}
-
 enum TurretOf {
 	Player,
     Ai
@@ -134,216 +111,6 @@ struct Bullet {
 #[derive(Component)]
 struct Direction {
     dir: Vec2,
-}
-
-#[derive(Component)]
-struct AttackTimer {
-    value: f32,
-}
-
-
-#[derive(Inspectable, Component)]
-struct Health {
-    value: u8,
-}
-
-#[derive(Component)]
-struct Steps {
-    value: f32,
-}
-
-#[derive(Component)]
-struct DirectionAi {
-    value: u8,
-}
-
-#[derive(Component)]
-struct Turret;
-
-#[derive(Component)]
-struct Bearing;
-
-#[derive(Component)]
-struct Healthbar;
-
-#[derive(Component)]
-struct HealthbarBorder;
-
-#[derive(Bundle)]
-struct TankBundle {
-    #[bundle]
-    geometry_builder: bevy_prototype_lyon::entity::ShapeBundle,
-    tank: Tank,
-    attack_timer: AttackTimer,
-    health: Health,
-    velocity: Velocity,
-}
-
-#[derive(Bundle)]
-struct AiBundle {
-    ai: Ai,
-    active: Active,
-    steps: Steps,
-    direction_ai: DirectionAi,
-}
-
-#[derive(Bundle)]
-struct HealthbarBundle {
-    #[bundle]
-    sprite_bundle: SpriteBundle,
-    healthbar: Healthbar,
-}
-
-impl HealthbarBundle {
-    fn new() -> HealthbarBundle {
-        HealthbarBundle {
-            sprite_bundle: SpriteBundle {
-                sprite: Sprite {
-                    color: Color::hsl(150.0, 0.98, 0.58),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
-                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
-                    ..default()
-                },
-                ..default()
-            },
-            healthbar: Healthbar,
-        }
-    }
-}
-
-#[derive(Bundle)]
-struct HealthbarBorderBundle {
-    #[bundle]
-    sprite_bundle: SpriteBundle,
-    healthbar_border: HealthbarBorder,
-}
-
-impl HealthbarBorderBundle {
-    fn new() -> HealthbarBorderBundle {
-        HealthbarBorderBundle {
-            sprite_bundle: SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgba(0., 0., 0., 0.5),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
-                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
-                    ..default()
-                },
-                ..default()
-            },
-            healthbar_border: HealthbarBorder,
-        }
-    }
-}
-
-#[derive(Bundle)]
-struct BearingBundle {
-    #[bundle]
-    sprite_bundle: SpriteBundle,
-    bearing: Bearing,
-}
-
-impl BearingBundle {
-    fn new() -> BearingBundle {
-        BearingBundle {
-            sprite_bundle: SpriteBundle {
-                sprite: Sprite {
-                    color: Color::NONE,
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(1.0, 1.0, 1.0),
-                    translation: Vec3::new(0.0, 0.0, 0.),
-                    ..default()
-                },
-                ..default()
-            },
-            bearing: Bearing,
-        }
-    }
-}
-
-#[derive(Bundle)]
-struct TurretBundle {
-    #[bundle]
-    sprite_bundle: SpriteBundle,
-    turret: Turret,
-}
-
-impl TurretBundle {
-    fn new() -> TurretBundle {
-        TurretBundle {
-            sprite_bundle: SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgb(0., 0., 0.),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(16.0, 16.0, 0.),
-                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0),
-                    ..default()
-                },
-                ..default()
-            },
-            turret: Turret,
-        }
-    }
-}
-
-impl TankBundle {
-    fn new(colour: Color) -> TankBundle {
-        let shape = shapes::RegularPolygon { // Define circle
-            sides: 30,
-            feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
-            ..shapes::RegularPolygon::default()
-        };
-
-        TankBundle {
-            geometry_builder: GeometryBuilder::build_as(
-                &shape,
-                DrawMode::Outlined {
-                    fill_mode: FillMode::color(colour),
-                    outline_mode: StrokeMode::new(Color::BLACK, 4.0),
-                },
-                Transform {
-                    translation: Vec3::new(0.0, 0.0, 1.0),
-                    ..default()
-                },
-            ),
-            tank: Tank,
-            attack_timer: AttackTimer {
-                value: 0.0,
-            },
-            health: Health {
-                value: MAX_HEALTH,
-            },
-            velocity: Velocity {
-                value: Vec2::new(0.0, 0.0),
-            },
-        }
-    }
-}
-
-impl AiBundle {
-    fn new() -> AiBundle {
-        AiBundle {
-            active: Active {
-                value: true,
-            },
-            steps: Steps {
-                value: 0.0,
-            },
-            direction_ai: DirectionAi {
-                value: 0,
-            },
-            ai: Ai,
-        }
-    }
 }
 
 fn create_player(mut commands: Commands) {
