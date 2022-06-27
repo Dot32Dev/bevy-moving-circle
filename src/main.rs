@@ -498,6 +498,9 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                     }
                 }
             }
+            for _ in players.iter() {
+                active.value = true
+            }
         }
     }
 
@@ -634,7 +637,7 @@ fn toggle_inspector(
 
 fn button_system(
     mut interaction_query: Query<(&Interaction, &mut UiColor, &Children), (Changed<Interaction>, With<Button>),>,
-    mut active_ai: Query<&mut Active>,
+    active_ai: Query<&mut Active>,
     mut commands: Commands,
     text_query: Query<&mut Text>,
 ) {
@@ -642,24 +645,27 @@ fn button_system(
         let text = text_query.get(children[0]).unwrap();
         match *interaction {
             Interaction::Clicked => {
-                // text.sections[0].value = "Press".to_string();
                 if text.sections[0].value == "Spawn Player" {
-                    println!("Spawn Player");
-
-                    commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
-                    .insert(Player)
-                    .with_children(|parent| {
-                        parent.spawn_bundle(BearingBundle::new())
+                    let mut no_players = false;
+                    for active in active_ai.iter() {
+                        // If an AI is innactive, then there must be no players
+                        if !active.value {
+                            no_players = true;
+                        }
+                    }
+                    if no_players {
+                        // Spawn player
+                        println!("Spawn Player");
+                        commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
+                        .insert(Player)
                         .with_children(|parent| {
-                            parent.spawn_bundle(TurretBundle::new());
+                            parent.spawn_bundle(BearingBundle::new())
+                            .with_children(|parent| {
+                                parent.spawn_bundle(TurretBundle::new());
+                            });
+                            parent.spawn_bundle(HealthbarBundle::new());
+                            parent.spawn_bundle(HealthbarBorderBundle::new());
                         });
-                        parent.spawn_bundle(HealthbarBundle::new());
-                        parent.spawn_bundle(HealthbarBorderBundle::new());
-                    });
-
-                    // Reawakens the AI
-                    for mut active in active_ai.iter_mut() {
-                        active.value = true;
                     }
                 } else if text.sections[0].value == "Spawn AI" {
                     println!("Spawning AI");
@@ -678,11 +684,9 @@ fn button_system(
                 *color = Color::MAROON.into();
             }
             Interaction::Hovered => {
-                // text.sections[0].value = "Hover".to_string();
                 *color = Color::RED.into();
             }
             Interaction::None => {
-                // text.sections[0].value = "Button".to_string();
                 *color = Color::ORANGE_RED.into();
             }
         }
