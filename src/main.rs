@@ -52,11 +52,12 @@ fn main() {
     .add_system(quit_and_resize)
     .add_system(mouse_button_input)
     .add_system(ai_rotate)
-    .add_system(collision)
+    .add_system(keep_tanks_on_screen)
     .add_system(keep_healthbars_on_screen)
     .add_system(kill_bullets)
     .add_system(button_system)
     .add_system(hurt_tanks)
+    .add_system(collide_tanks)
     .add_system_set(
         SystemSet::new()
         .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
@@ -230,7 +231,10 @@ fn movement(keyboard_input: Res<Input<KeyCode>>,
     }
 }
 
-fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, Option<&mut DirectionAi>), With<Tank>>, windows: ResMut<Windows>,) {
+fn keep_tanks_on_screen(
+    mut tanks: Query<(&mut Transform, &mut Velocity, Option<&mut DirectionAi>), With<Tank>>,
+    windows: ResMut<Windows>,
+) {
     let window = windows.get_primary().unwrap();
     for (mut tank, mut velocity, direction) in tanks.iter_mut() {
 
@@ -265,6 +269,35 @@ fn collision(mut tanks: Query<(&mut Transform, &mut Velocity, Option<&mut Direct
             },
             None    => (),
         }
+    }
+}
+
+fn collide_tanks(
+    mut tanks: Query<&mut Transform, With<Tank>>
+) {
+    // Create a vector that is as long as the number of tanks
+    let mut movements = vec![Vec2::new(0.0, 0.0); tanks.iter().count()];
+    // Find the movement of each tank
+    for (i, tank) in tanks.iter().enumerate() {
+        for (j, sibling) in tanks.iter().enumerate() {
+            if tank != sibling {
+                let distance = distance_between(&tank.translation.truncate(), &sibling.translation.truncate());
+                if distance < TANK_SIZE * 2.0 {
+                    // Gets the direction and how far it should move
+                    let direction = (tank.translation.truncate() - sibling.translation.truncate()).normalize();
+                    let move_len = (TANK_SIZE * 2.0) - distance;
+
+                    // Adds required movement into the vector
+                    movements[i] = direction * move_len * 0.5;
+                    movements[j] = direction * move_len * -0.5;
+                }
+            }
+        }
+    }
+
+    // Apply the movement to the tanks
+    for (i, mut tank) in tanks.iter_mut().enumerate() {
+        tank.translation += movements[i].extend(0.0);
     }
 }
 
