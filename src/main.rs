@@ -633,12 +633,10 @@ fn toggle_inspector(
 }
 
 fn button_system(
-    mut interaction_query: Query<
-        (&Interaction, &mut UiColor, &Children),
-        (Changed<Interaction>, With<Button>),
-    >,
-    mut text_query: Query<&mut Text>,
+    mut interaction_query: Query<(&Interaction, &mut UiColor, &Children), (Changed<Interaction>, With<Button>),>,
+    mut active_ai: Query<&mut Active>,
     mut commands: Commands,
+    text_query: Query<&mut Text>,
 ) {
     for (interaction, mut color, children) in interaction_query.iter_mut() {
         let text = text_query.get(children[0]).unwrap();
@@ -658,6 +656,11 @@ fn button_system(
                         parent.spawn_bundle(HealthbarBundle::new());
                         parent.spawn_bundle(HealthbarBorderBundle::new());
                     });
+
+                    // Reawakens the AI
+                    for mut active in active_ai.iter_mut() {
+                        active.value = true;
+                    }
                 } else if text.sections[0].value == "Spawn AI" {
                     println!("Spawning AI");
 
