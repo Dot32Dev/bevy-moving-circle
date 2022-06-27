@@ -1,6 +1,7 @@
 #![windows_subsystem = "windows"]
 
 // TODO: Ai only dodge when there are player bullets in the scene?
+// TODO: Add respawn button when you die https://github.com/bevyengine/bevy/blob/main/examples/ui/button.rs
 
 mod tanks;
 
@@ -28,8 +29,8 @@ fn main() {
     // .insert_resource(Msaa { samples: 4 })
     .insert_resource(WindowDescriptor {
             title: "Tiny Tank (bevy edition)".to_string(),
-            width: 800.,
-            height: 600.,
+            width: 1280.,
+            height: 720.,
             present_mode: PresentMode::Fifo, // Vesync enabled, replace Fifo with Mailbox for no vsync
             ..default()
         })
@@ -54,14 +55,15 @@ fn main() {
     .add_system(collision)
     .add_system(keep_healthbars_on_screen)
     .add_system(kill_bullets)
+    .add_system(button_system)
     .add_system(hurt_tanks)
     .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
-                .with_system(update_bullets)
-                .with_system(movement)
-                .with_system(ai_movement)
-        )
+        SystemSet::new()
+        .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
+        .with_system(update_bullets)
+        .with_system(movement)
+        .with_system(ai_movement)
+    )
     .add_plugin(Intro)
     .run();
 }
@@ -71,6 +73,7 @@ fn setup(
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(UiCameraBundle::default());
     println!("{}", env::consts::OS); // Prints the current OS.
     
     let gunshot = asset_server.load("ShotsFired.ogg");
@@ -87,6 +90,66 @@ fn setup(
     commands.insert_resource(WallHitSound(wall_hit));
     let wall_hit_deep = asset_server.load("WallHitDeep.ogg");
     commands.insert_resource(WallHitDeepSound(wall_hit_deep));
+
+    commands.spawn_bundle(ButtonBundle {
+        style: Style {
+            size: Size::new(Val::Px(200.0), Val::Px(45.0)),
+            // center button
+            margin: Rect::all(Val::Px(20.0)),
+            // horizontally center child text
+            justify_content: JustifyContent::Center,
+            // vertically center child text
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        color: Color::ORANGE_RED.into(),
+        ..default()
+    })
+    .with_children(|parent| {
+        parent.spawn_bundle(TextBundle {
+            text: Text::with_section(
+                "Spawn Player",
+                TextStyle {
+                    font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
+                    font_size: 40.0,
+                    color: Color::rgb(0.9, 0.9, 0.9),
+                },
+                Default::default(),
+            ),
+            ..default()
+        });
+    });
+    commands.spawn_bundle(ButtonBundle {
+        style: Style {
+            size: Size::new(Val::Px(150.0), Val::Px(45.0)),
+            // center button
+            margin: Rect::all(Val::Px(20.0)),
+            // horizontally center child text
+            justify_content: JustifyContent::Center,
+            // vertically center child text
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        color: Color::ORANGE_RED.into(),
+        ..default()
+    })
+    .with_children(|parent| {
+        parent.spawn_bundle(TextBundle {
+            text: Text::with_section(
+                "Spawn AI",
+                TextStyle {
+                    font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
+                    font_size: 40.0,
+                    color: Color::rgb(0.9, 0.9, 0.9),
+                },
+                Default::default(),
+            ),
+            ..default()
+        });
+    });
+
+
+    
 }
 
 struct GunshotSound(Handle<AudioSource>);
@@ -566,6 +629,60 @@ fn toggle_inspector(
 ) {
     if input.just_pressed(KeyCode::Grave) {
         window_params.enabled = !window_params.enabled
+    }
+}
+
+fn button_system(
+    mut interaction_query: Query<
+        (&Interaction, &mut UiColor, &Children),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut text_query: Query<&mut Text>,
+    mut commands: Commands,
+) {
+    for (interaction, mut color, children) in interaction_query.iter_mut() {
+        let text = text_query.get(children[0]).unwrap();
+        match *interaction {
+            Interaction::Clicked => {
+                // text.sections[0].value = "Press".to_string();
+                if text.sections[0].value == "Spawn Player" {
+                    println!("Spawn Player");
+
+                    commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
+                    .insert(Player)
+                    .with_children(|parent| {
+                        parent.spawn_bundle(BearingBundle::new())
+                        .with_children(|parent| {
+                            parent.spawn_bundle(TurretBundle::new());
+                        });
+                        parent.spawn_bundle(HealthbarBundle::new());
+                        parent.spawn_bundle(HealthbarBorderBundle::new());
+                    });
+                } else if text.sections[0].value == "Spawn AI" {
+                    println!("Spawning AI");
+
+                    commands.spawn_bundle(TankBundle::new(Color::ORANGE))
+                    .insert_bundle(AiBundle::new())
+                    .with_children(|parent| {
+                        parent.spawn_bundle(BearingBundle::new())
+                        .with_children(|parent| {
+                            parent.spawn_bundle(TurretBundle::new());
+                        });
+                        parent.spawn_bundle(HealthbarBundle::new());
+                        parent.spawn_bundle(HealthbarBorderBundle::new());
+                    });
+                }
+                *color = Color::MAROON.into();
+            }
+            Interaction::Hovered => {
+                // text.sections[0].value = "Hover".to_string();
+                *color = Color::RED.into();
+            }
+            Interaction::None => {
+                // text.sections[0].value = "Button".to_string();
+                *color = Color::ORANGE_RED.into();
+            }
+        }
     }
 }
 
