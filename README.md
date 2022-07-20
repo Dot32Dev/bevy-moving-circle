@@ -27,7 +27,7 @@ Nicer colours, fixed update, and a rotating turret that faces the player!
 Added my intro (which i made as a rust library, [see repo here](https://github.com/Dot32IsCool/dot32-intro-rs) <br>
 Installation was as simple as
 ```toml
-[Dependancies]
+[Dependencies]
 dot32_intro = { git = "https://github.com/Dot32IsCool/dot32-intro-rs"}
 ```
 ![image of intro animation](https://user-images.githubusercontent.com/61964090/168785042-728b8934-35aa-4af1-9c49-8634f00d8ce3.gif)
