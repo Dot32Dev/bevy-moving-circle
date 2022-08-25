@@ -2,6 +2,8 @@
 
 // TODO: Ai only dodge when there are player bullets in the scene?
 // TODO: Add respawn button when you die https://github.com/bevyengine/bevy/blob/main/examples/ui/button.rs
+// TODO: Add k/d ratio at the top of the screen
+// TODO: Rounded corners UI
 
 mod tanks;
 
@@ -29,12 +31,13 @@ fn main() {
     // .insert_resource(Msaa { samples: 4 })
     .insert_resource(WindowDescriptor {
             title: "Tiny Tank (bevy edition)".to_string(),
-            width: 1280.,
-            height: 720.,
+            width: 800.,
+            height: 600.,
             present_mode: PresentMode::Fifo, // Vesync enabled, replace Fifo with Mailbox for no vsync
             ..default()
         })
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
+    .insert_resource(AiKilled { score: 0})
     .add_startup_system(create_player)
     .add_startup_system(create_enemy)
     .add_startup_system(setup)
@@ -58,6 +61,7 @@ fn main() {
     .add_system(button_system)
     .add_system(hurt_tanks)
     .add_system(collide_tanks)
+    .add_system(update_kills_text)
     .add_system_set(
         SystemSet::new()
         .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
@@ -149,7 +153,18 @@ fn setup(
         });
     });
 
-
+    // commands.spawn_bundle(TextBundle {
+    //     text: Text::with_section(
+    //         "Kills: 0",
+    //         TextStyle {
+    //             font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
+    //             font_size: 40.0,
+    //             color: Color::rgb(0.9, 0.9, 0.9),
+    //         },
+    //         Default::default(),
+    //     ),
+    //     ..default()
+    // }).insert(KillsText);
     
 }
 
@@ -173,8 +188,15 @@ struct Bullet {
 }
 
 #[derive(Component)]
+struct KillsText;
+
+#[derive(Component)]
 struct Direction {
     dir: Vec2,
+}
+
+struct AiKilled{ 
+	score: u8,
 }
 
 fn create_player(mut commands: Commands) {
@@ -205,7 +227,8 @@ fn create_enemy(mut commands: Commands) {
     }
 }
 
-fn movement(keyboard_input: Res<Input<KeyCode>>,
+fn movement(
+    keyboard_input: Res<Input<KeyCode>>,
     mut positions: Query<(&mut Transform,
     &mut Velocity),
     With<Player>>,
@@ -571,6 +594,7 @@ fn hurt_tanks(
     mut ais: Query<(&Transform, Entity, &mut Health, &Children, &mut Velocity), (Without<Player>, With<Ai>, Without<Bullet>)>,
     mut players: Query<(&mut Transform, Entity, &mut Health, &Children, &mut Velocity), (With<Player>, Without<Ai>, Without<Bullet>)>,
     mut healthbar_query: Query<(&mut Transform, &mut Sprite), (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
+    mut ai_killed: ResMut<AiKilled>, 
 ) {
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
         match bullet_type.from {
@@ -592,6 +616,7 @@ fn hurt_tanks(
                             }
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
+                            ai_killed.score += 1;
                         }
                         commands.entity(bullet_entity).despawn(); 
                         if !MUTE {
@@ -618,6 +643,7 @@ fn hurt_tanks(
                             }
                         } else {
                             commands.entity(player_entity).despawn_recursive(); 
+                            ai_killed.score += 0;
                         }
                         commands.entity(bullet_entity).despawn(); 
                         if !MUTE {
@@ -723,6 +749,16 @@ fn button_system(
                 *color = Color::ORANGE_RED.into();
             }
         }
+    }
+}
+
+fn update_kills_text(
+    ai_killed: ResMut<AiKilled>,
+    mut kills: Query<&mut Text, With<KillsText>>,
+) {
+    for mut kills_text in kills.iter_mut() {
+        // println!("{}", ai_killed.score);
+        kills_text.sections[0].value = format!("Kills: {}", ai_killed.score);
     }
 }
 
