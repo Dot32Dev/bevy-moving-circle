@@ -110,6 +110,7 @@ fn setup(
         color: Color::ORANGE_RED.into(),
         ..default()
     })
+    .insert(Name::new("Spawn player button"))
     .with_children(|parent| {
         parent.spawn_bundle(TextBundle {
             text: Text::with_section(
@@ -138,6 +139,7 @@ fn setup(
         color: Color::ORANGE_RED.into(),
         ..default()
     })
+    .insert(Name::new("Spawn AI button"))
     .with_children(|parent| {
         parent.spawn_bundle(TextBundle {
             text: Text::with_section(
@@ -202,6 +204,7 @@ struct AiKilled{
 fn create_player(mut commands: Commands) {
     commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
     .insert(Player)
+    .insert(Name::new("Player"))
     .with_children(|parent| {
         parent.spawn_bundle(BearingBundle::new())
         .with_children(|parent| {
@@ -216,6 +219,7 @@ fn create_enemy(mut commands: Commands) {
     for _ in 0..2 {
         commands.spawn_bundle(TankBundle::new(Color::ORANGE))
         .insert_bundle(AiBundle::new())
+        .insert(Name::new("Enemy"))
         .with_children(|parent| {
             parent.spawn_bundle(BearingBundle::new())
             .with_children(|parent| {
@@ -455,6 +459,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             },
                         )).insert(Bullet {from: TurretOf::Player} )
                         // .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
+                        .insert(Name::new("Bullet"))
                         .insert(Direction{dir:(vec - player.translation.truncate() - window_size/2.0).normalize()});
                     }
 
@@ -533,6 +538,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                         },
                     )).insert(Bullet {from: TurretOf::Ai} )
                     // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
+                    .insert(Name::new("Bullet"))
                     .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
                 }
 
@@ -717,6 +723,7 @@ fn button_system(
                         println!("Spawn Player");
                         commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
                         .insert(Player)
+                        .insert(Name::new("Player"))
                         .with_children(|parent| {
                             parent.spawn_bundle(BearingBundle::new())
                             .with_children(|parent| {
@@ -731,6 +738,7 @@ fn button_system(
 
                     commands.spawn_bundle(TankBundle::new(Color::ORANGE))
                     .insert_bundle(AiBundle::new())
+                    .insert(Name::new("Enemy"))
                     .with_children(|parent| {
                         parent.spawn_bundle(BearingBundle::new())
                         .with_children(|parent| {
