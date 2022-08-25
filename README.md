@@ -1,7 +1,11 @@
+> While my dependencies are yet to be updated, the version of Bevy this project uses is still 0.7
+
 # bevy-moving-circle
 A yellow circle player controlled with arrow keys/WASD
 
 <img width="1392" alt="Screen Shot 2022-03-02 at 19 51 18" src="https://user-images.githubusercontent.com/61964090/156356580-6790c24e-8311-4f46-9851-0e8d8510e1a3.png">
+
+-------
 
 Now you can click to spawn orange cicles lmao
 
@@ -32,3 +36,8 @@ dot32_intro = { git = "https://github.com/Dot32IsCool/dot32-intro-rs"}
 ```
 ![image of intro animation](https://user-images.githubusercontent.com/61964090/168785042-728b8934-35aa-4af1-9c49-8634f00d8ce3.gif)
 
+-------
+
+Added AI and healthbars!
+
+<img width="912" alt="Screen Shot 2022-08-01 at 18 34 08" src="https://user-images.githubusercontent.com/61964090/182130151-94b090f9-8a92-4760-9c33-4ef8cfa5cf62.png">
