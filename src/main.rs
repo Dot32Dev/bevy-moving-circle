@@ -7,10 +7,12 @@
 
 mod tanks;
 
-use bevy::prelude::*;
-use bevy::window::*;
-use bevy::app::AppExit; // For MacOS CMD+W to quit keybind
-use bevy::core::FixedTimestep;
+use bevy::{
+    prelude::*, 
+    window::*, 
+    app::AppExit, // For MacOs Cmd+W to close the window
+    core::FixedTimestep
+};
 
 use bevy_prototype_lyon::prelude::*; // Draw circles with ease
 use std::env; // Detect OS for OS specific keybinds

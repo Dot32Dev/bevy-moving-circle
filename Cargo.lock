@@ -1370,7 +1370,7 @@ checksum = "bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b"
 [[package]]
 name = "dot32_intro"
 version = "0.1.0"
-source = "git+https://github.com/Dot32IsCool/dot32-intro-rs#10d737dddf42d4d9010617abbf1af9429594d483"
+source = "git+https://github.com/Dot32IsCool/dot32-intro-rs?rev=10d737d#10d737dddf42d4d9010617abbf1af9429594d483"
 dependencies = [
  "bevy",
 ]
