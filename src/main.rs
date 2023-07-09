@@ -336,8 +336,8 @@ fn ai_movement(
 ) {
     for (mut transform, mut velocity, mut steps, mut direction, active) in positions.iter_mut() {
         if steps.value < 0.0 {
-            direction.value = rand::thread_rng().gen_range(0, 4) as u8;
-            steps.value = rand::thread_rng().gen_range(1, 110) as f32 / 110.0;
+            direction.value = rand::thread_rng().gen_range(0 ..= 4) as u8;
+            steps.value = rand::thread_rng().gen_range(0 ..= 110) as f32 / 110.0;
         }
         if direction.value == 0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
             velocity.value.x -= TANK_SPEED;
@@ -507,7 +507,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 }
 
                 if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 {
-                    attack_timer.value =rand::thread_rng().gen_range(5, 14) as f32 /10.0 ;
+                    attack_timer.value =rand::thread_rng().gen_range(5 ..= 14) as f32 /10.0 ;
                     if !MUTE {
                         audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                         audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
