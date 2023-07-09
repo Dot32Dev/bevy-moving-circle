@@ -10,16 +10,16 @@ mod tanks;
 use bevy::{
     prelude::*, 
     window::*, 
-    app::AppExit, // For MacOs Cmd+W to close the window
-    core::FixedTimestep
+    app::AppExit, sprite::MaterialMesh2dBundle, // For MacOs Cmd+W to close the window
+    // core::FixedTimestep
 };
 
-use bevy_prototype_lyon::prelude::*; // Draw circles with ease
+// use bevy_prototype_lyon::prelude::*; // Draw circles with ease
 use std::env; // Detect OS for OS specific keybinds
 use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
-use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
+// use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
 use tanks::*;
 
 const TIME_STEP: f32 = 1.0 / 120.0; // FPS
@@ -31,46 +31,72 @@ const KNOCKBACK: f32 = 5.0;
 fn main() {
     App::new()
     // .insert_resource(Msaa { samples: 4 })
-    .insert_resource(WindowDescriptor {
-            title: "Tiny Tank (bevy edition)".to_string(),
-            width: 800.,
-            height: 600.,
-            present_mode: PresentMode::Fifo, // Vesync enabled, replace Fifo with Mailbox for no vsync
+    // .insert_resource(WindowDescriptor {
+    //         title: "Tiny Tank (bevy edition)".to_string(),
+    //         width: 800.,
+    //         height: 600.,
+    //         present_mode: PresentMode::Fifo, // Vesync enabled, replace Fifo with Mailbox for no vsync
+    //         ..default()
+    //     })
+    // .add_plugins(DefaultPlugins.set(WindowPlugin {
+    //     primary_window: Some(Window {
+    //         title: "Tiny Tank (Bevy Edition)".into(),
+    //         resolution: WindowResolution::new(800., 600.),
+    //         ..default()
+    //     }),
+    //     ..default()
+    // }))
+    .add_plugins(
+        DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Tiny Tank (Bevy Edition)".into(),
+                resolution: WindowResolution::new(800., 600.),
+                ..default()
+            }),
             ..default()
         })
+        .build()
+        .add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin),
+    )
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .insert_resource(AiKilled { score: 0})
     .add_startup_system(create_player)
     .add_startup_system(create_enemy)
     .add_startup_system(setup)
-    .add_plugins_with(DefaultPlugins, |group| {
-        group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
-    })
-    .add_plugin(WorldInspectorPlugin::new())
-    .register_inspectable::<Health>() // tells bevy-inspector-egui how to display the struct in the world inspector
-    .insert_resource(WorldInspectorParams {
-        enabled: false,
-        ..Default::default()
-    })
-    .add_system(toggle_inspector)
-    .add_plugin(ShapePlugin)
-    .add_system(quit_and_resize)
+    // .add_plugins_with(DefaultPlugins, |group| {
+    //     group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
+    // })
+    // .add_plugin(EmbeddedAssetPlugin.before(EmbeddedAssetPlugin))
+
+    // .add_plugin(WorldInspectorPlugin::new())
+    // .register_inspectable::<Health>() // tells bevy-inspector-egui how to display the struct in the world inspector
+    // .insert_resource(WorldInspectorParams {
+    //     enabled: false,
+    //     ..Default::default()
+    // })
+    // .add_system(toggle_inspector)
+    // .add_plugin(ShapePlugin)
+    // .add_system(quit_and_resize)
     .add_system(mouse_button_input)
     .add_system(ai_rotate)
     .add_system(keep_tanks_on_screen)
     .add_system(keep_healthbars_on_screen)
     .add_system(kill_bullets)
-    .add_system(button_system)
+    // .add_system(button_system)
     .add_system(hurt_tanks)
     .add_system(collide_tanks)
     .add_system(update_kills_text)
-    .add_system_set(
-        SystemSet::new()
-        .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
-        .with_system(update_bullets)
-        .with_system(movement)
-        .with_system(ai_movement)
-    )
+    // .add_system_set(
+    //     SystemSet::new()
+    //     .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
+    //     .with_system(update_bullets)
+    //     .with_system(movement)
+    //     .with_system(ai_movement)
+    // )
+    .add_system(update_bullets)
+    .add_system(movement)
+    .add_system(ai_movement)
+    // 
     .add_plugin(Intro)
     .run();
 }
@@ -79,8 +105,9 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    commands.spawn_bundle(UiCameraBundle::default());
+    // commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    // commands.spawn_bundle(UiCameraBundle::default());
+    commands.spawn(Camera2dBundle::default());
     println!("{}", env::consts::OS); // Prints the current OS.
     
     let gunshot = asset_server.load("ShotsFired.ogg");
@@ -98,64 +125,64 @@ fn setup(
     let wall_hit_deep = asset_server.load("WallHitDeep.ogg");
     commands.insert_resource(WallHitDeepSound(wall_hit_deep));
 
-    commands.spawn_bundle(ButtonBundle {
-        style: Style {
-            size: Size::new(Val::Px(200.0), Val::Px(45.0)),
-            // center button
-            margin: Rect::all(Val::Px(20.0)),
-            // horizontally center child text
-            justify_content: JustifyContent::Center,
-            // vertically center child text
-            align_items: AlignItems::Center,
-            ..default()
-        },
-        color: Color::ORANGE_RED.into(),
-        ..default()
-    })
-    .insert(Name::new("Spawn player button"))
-    .with_children(|parent| {
-        parent.spawn_bundle(TextBundle {
-            text: Text::with_section(
-                "Spawn Player",
-                TextStyle {
-                    font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
-                    font_size: 40.0,
-                    color: Color::rgb(0.9, 0.9, 0.9),
-                },
-                Default::default(),
-            ),
-            ..default()
-        });
-    });
-    commands.spawn_bundle(ButtonBundle {
-        style: Style {
-            size: Size::new(Val::Px(150.0), Val::Px(45.0)),
-            // center button
-            margin: Rect::all(Val::Px(20.0)),
-            // horizontally center child text
-            justify_content: JustifyContent::Center,
-            // vertically center child text
-            align_items: AlignItems::Center,
-            ..default()
-        },
-        color: Color::ORANGE_RED.into(),
-        ..default()
-    })
-    .insert(Name::new("Spawn AI button"))
-    .with_children(|parent| {
-        parent.spawn_bundle(TextBundle {
-            text: Text::with_section(
-                "Spawn AI",
-                TextStyle {
-                    font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
-                    font_size: 40.0,
-                    color: Color::rgb(0.9, 0.9, 0.9),
-                },
-                Default::default(),
-            ),
-            ..default()
-        });
-    });
+    // commands.spawn_bundle(ButtonBundle {
+    //     style: Style {
+    //         size: Size::new(Val::Px(200.0), Val::Px(45.0)),
+    //         // center button
+    //         margin: Rect::all(Val::Px(20.0)),
+    //         // horizontally center child text
+    //         justify_content: JustifyContent::Center,
+    //         // vertically center child text
+    //         align_items: AlignItems::Center,
+    //         ..default()
+    //     },
+    //     color: Color::ORANGE_RED.into(),
+    //     ..default()
+    // })
+    // .insert(Name::new("Spawn player button"))
+    // .with_children(|parent| {
+    //     parent.spawn_bundle(TextBundle {
+    //         text: Text::with_section(
+    //             "Spawn Player",
+    //             TextStyle {
+    //                 font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
+    //                 font_size: 40.0,
+    //                 color: Color::rgb(0.9, 0.9, 0.9),
+    //             },
+    //             Default::default(),
+    //         ),
+    //         ..default()
+    //     });
+    // });
+    // commands.spawn_bundle(ButtonBundle {
+    //     style: Style {
+    //         size: Size::new(Val::Px(150.0), Val::Px(45.0)),
+    //         // center button
+    //         margin: Rect::all(Val::Px(20.0)),
+    //         // horizontally center child text
+    //         justify_content: JustifyContent::Center,
+    //         // vertically center child text
+    //         align_items: AlignItems::Center,
+    //         ..default()
+    //     },
+    //     color: Color::ORANGE_RED.into(),
+    //     ..default()
+    // })
+    // .insert(Name::new("Spawn AI button"))
+    // .with_children(|parent| {
+    //     parent.spawn_bundle(TextBundle {
+    //         text: Text::with_section(
+    //             "Spawn AI",
+    //             TextStyle {
+    //                 font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
+    //                 font_size: 40.0,
+    //                 color: Color::rgb(0.9, 0.9, 0.9),
+    //             },
+    //             Default::default(),
+    //         ),
+    //         ..default()
+    //     });
+    // });
 
     // commands.spawn_bundle(TextBundle {
     //     text: Text::with_section(
@@ -171,14 +198,19 @@ fn setup(
     // }).insert(KillsText);
     
 }
-
+#[derive(Resource)]
 struct GunshotSound(Handle<AudioSource>);
+#[derive(Resource)]
 struct GunshotDeepSound(Handle<AudioSource>);
 
+#[derive(Resource)]
 struct TankHitSound(Handle<AudioSource>);
+#[derive(Resource)]
 struct TankHitDeepSound(Handle<AudioSource>);
 
+#[derive(Resource)]
 struct WallHitSound(Handle<AudioSource>);
+#[derive(Resource)]
 struct WallHitDeepSound(Handle<AudioSource>);
 
 enum TurretOf {
@@ -199,36 +231,47 @@ struct Direction {
     dir: Vec2,
 }
 
+#[derive(Resource)]
 struct AiKilled{ 
 	score: u8,
 }
 
-fn create_player(mut commands: Commands) {
-    commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
+fn create_player(
+    mut commands: Commands,
+
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    commands.spawn(TankBundle::new(Color::rgb(0.35, 0.6, 0.99), &mut meshes, &mut materials))
     .insert(Player)
     .insert(Name::new("Player"))
     .with_children(|parent| {
-        parent.spawn_bundle(BearingBundle::new())
+        parent.spawn(BearingBundle::new())
         .with_children(|parent| {
-            parent.spawn_bundle(TurretBundle::new());
+            parent.spawn(TurretBundle::new());
         });
-        parent.spawn_bundle(HealthbarBundle::new());
-        parent.spawn_bundle(HealthbarBorderBundle::new());
+        parent.spawn(HealthbarBundle::new());
+        parent.spawn(HealthbarBorderBundle::new());
     });
 }
 
-fn create_enemy(mut commands: Commands) {
+fn create_enemy(
+    mut commands: Commands,
+
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     for _ in 0..2 {
-        commands.spawn_bundle(TankBundle::new(Color::ORANGE))
-        .insert_bundle(AiBundle::new())
+        commands.spawn(TankBundle::new(Color::ORANGE, &mut meshes, &mut materials))
+        .insert(AiBundle::new())
         .insert(Name::new("Enemy"))
         .with_children(|parent| {
-            parent.spawn_bundle(BearingBundle::new())
+            parent.spawn(BearingBundle::new())
             .with_children(|parent| {
-                parent.spawn_bundle(TurretBundle::new());
+                parent.spawn(TurretBundle::new());
             });
-            parent.spawn_bundle(HealthbarBundle::new());
-            parent.spawn_bundle(HealthbarBorderBundle::new());
+            parent.spawn(HealthbarBundle::new());
+            parent.spawn(HealthbarBorderBundle::new());
         });
     }
 }
@@ -241,16 +284,16 @@ fn movement(
     time: Res<Time>,
 ) {
     for (mut transform, mut velocity) in positions.iter_mut() {
-        if (keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A)) && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+        if (keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
             velocity.value.x -= TANK_SPEED;
         }
-        if (keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D)) && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+        if (keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
             velocity.value.x += TANK_SPEED;
         }
-        if (keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S)) && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+        if (keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
             velocity.value.y -= TANK_SPEED;
         }
-        if (keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W)) && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+        if (keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
             velocity.value.y += TANK_SPEED;
         }
 
@@ -262,9 +305,12 @@ fn movement(
 
 fn keep_tanks_on_screen(
     mut tanks: Query<(&mut Transform, &mut Velocity, Option<&mut DirectionAi>), With<Tank>>,
-    windows: ResMut<Windows>,
+    // primary_window: Query<&Window, With<PrimaryWindow>>
+    primary_window: Query<&Window, With<PrimaryWindow>>
 ) {
-    let window = windows.get_primary().unwrap();
+    let Ok(window) = primary_window.get_single() else {
+        return;
+    };
     for (mut tank, mut velocity, direction) in tanks.iter_mut() {
 
         let mut tempdir = 5;
@@ -339,16 +385,16 @@ fn ai_movement(
             direction.value = rand::thread_rng().gen_range(0 ..= 4) as u8;
             steps.value = rand::thread_rng().gen_range(0 ..= 110) as f32 / 110.0;
         }
-        if direction.value == 0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
+        if direction.value == 0 && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 && active.value == true {
             velocity.value.x -= TANK_SPEED;
         }
-        if direction.value == 1 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
+        if direction.value == 1 && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 && active.value == true {
             velocity.value.x += TANK_SPEED;
         }
-        if direction.value == 2 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
+        if direction.value == 2 && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 && active.value == true {
             velocity.value.y -= TANK_SPEED;
         }
-        if direction.value == 3 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 && active.value == true {
+        if direction.value == 3 && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 && active.value == true {
             velocity.value.y += TANK_SPEED;
         }
 
@@ -360,43 +406,45 @@ fn ai_movement(
     }
 }
 
-fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>,
-    mut exit: EventWriter<AppExit>,
-    mut windows: ResMut<Windows>,
-) {
-    let window = windows.get_primary_mut().unwrap();
+// fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>,
+//     mut exit: EventWriter<AppExit>,
+//     primary_window: Query<&Window, With<PrimaryWindow>>
+// ) {
+//     let Ok(window) = primary_window.get_single() else {
+//         return;
+//     };
 
-    if env::consts::OS == "macos" {
-        if keyboard_input.pressed(KeyCode::LWin) && keyboard_input.just_pressed(KeyCode::W) {
-            exit.send(AppExit);
-            window.set_mode(WindowMode::Windowed);
-        }
-        if keyboard_input.pressed(KeyCode::LWin) 
-        && keyboard_input.pressed(KeyCode::LControl) 
-        && keyboard_input.just_pressed(KeyCode::F) {
-            println!("{:?}", window.mode());
-            if window.mode() == WindowMode::Windowed {
-                window.set_mode(WindowMode::BorderlessFullscreen);
-            } else if window.mode() == WindowMode::BorderlessFullscreen {
-                window.set_mode(WindowMode::Windowed);
-            }
-        }
-    }
-    if env::consts::OS == "windows" {
-        if keyboard_input.just_pressed(KeyCode::F11) {
-            if window.mode() == WindowMode::Windowed {
-                window.set_mode(WindowMode::BorderlessFullscreen);
-            } else if window.mode() == WindowMode::BorderlessFullscreen {
-                window.set_mode(WindowMode::Windowed);
-            }
-        }
-    }
-}
+//     if env::consts::OS == "macos" {
+//         if keyboard_input.pressed(KeyCode::LWin) && keyboard_input.just_pressed(KeyCode::W) {
+//             exit.send(AppExit);
+//             window.set_mode(WindowMode::Windowed);
+//         }
+//         if keyboard_input.pressed(KeyCode::LWin) 
+//         && keyboard_input.pressed(KeyCode::LControl) 
+//         && keyboard_input.just_pressed(KeyCode::F) {
+//             println!("{:?}", window.mode());
+//             if window.mode() == WindowMode::Windowed {
+//                 window.set_mode(WindowMode::BorderlessFullscreen);
+//             } else if window.mode() == WindowMode::BorderlessFullscreen {
+//                 window.set_mode(WindowMode::Windowed);
+//             }
+//         }
+//     }
+//     if env::consts::OS == "windows" {
+//         if keyboard_input.just_pressed(KeyCode::F11) {
+//             if window.mode() == WindowMode::Windowed {
+//                 window.set_mode(WindowMode::BorderlessFullscreen);
+//             } else if window.mode() == WindowMode::BorderlessFullscreen {
+//                 window.set_mode(WindowMode::Windowed);
+//             }
+//         }
+//     }
+// }
 
 
 fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     buttons: Res<Input<MouseButton>>, 
-    windows: Res<Windows>, 
+    primary_window: Query<&Window, With<PrimaryWindow>>,
     time: Res<Time>,
     audio: Res<Audio>,
     gunshot: Res<GunshotSound>,
@@ -405,8 +453,14 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
     mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Player>)>,
+
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let window = windows.get_primary().unwrap();
+    let Ok(window) = primary_window.get_single() else {
+        return;
+
+    };
     if let Some(_position) = window.cursor_position() {
         match Some(_position) {
             Some(vec) => {
@@ -427,7 +481,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             }
                         }
                     }
-                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4  && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32  {
+                    if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4  && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
                         attack_timer.value = 0.0;
                         if !MUTE {
                             audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
@@ -445,24 +499,35 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                         }
 
                         // println!("x{}, y{}", vec.x, vec.y);
-                        let shape = shapes::RegularPolygon {
-                            sides: 30,
-                            feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
-                            ..shapes::RegularPolygon::default()
-                        };
-                        commands.spawn_bundle(GeometryBuilder::build_as(
-                            &shape,
-                            DrawMode::Fill (
-                                FillMode::color(Color::BLACK),
-                            ),
-                            Transform {
-                                translation: Vec3::new(player.translation.x, player.translation.y, 0.0),
+                        // let shape = shapes::RegularPolygon {
+                        //     sides: 30,
+                        //     feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
+                        //     ..shapes::RegularPolygon::default()
+                        // };
+                        // commands.spawn(GeometryBuilder::build_as(
+                        //     &shape,
+                        //     DrawMode::Fill (
+                        //         FillMode::color(Color::BLACK),
+                        //     ),
+                        //     Transform {
+                        //         translation: Vec3::new(player.translation.x, player.translation.y, 0.0),
+                        //         ..default()
+                        //     },
+                        // )).insert(Bullet {from: TurretOf::Player} )
+                        // // .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
+                        // .insert(Name::new("Bullet"))
+                        // .insert(Direction{dir:(vec - player.translation.truncate() - window_size/2.0).normalize()});
+                        commands.spawn((
+                            MaterialMesh2dBundle {
+                                mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
+                                material: materials.add(ColorMaterial::from(Color::PURPLE)),
+                                transform: Transform::from_translation(Vec3::new(player.translation.x, player.translation.y, 0.0)),
                                 ..default()
                             },
-                        )).insert(Bullet {from: TurretOf::Player} )
-                        // .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
-                        .insert(Name::new("Bullet"))
-                        .insert(Direction{dir:(vec - player.translation.truncate() - window_size/2.0).normalize()});
+                            Name::new("Bullet"),
+                            Bullet {from: TurretOf::Player},
+                            Direction{dir:(vec - player.translation.truncate() - window_size/2.0).normalize()},
+                        ));
                     }
 
                     attack_timer.value += time.delta_seconds()
@@ -484,6 +549,9 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children, &mut Active), With<Ai>>,
     mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Ai>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Ai>, Without<Player>)>,
+
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for (ai, mut attack_timer, children, mut active) in positions.iter_mut() {
         if active.value == true {
@@ -506,7 +574,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                     }
                 }
 
-                if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 {
+                if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 {
                     attack_timer.value =rand::thread_rng().gen_range(5 ..= 14) as f32 /10.0 ;
                     if !MUTE {
                         audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
@@ -524,27 +592,38 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                     }
 
                     // println!("x{}, y{}", player.translation.x, player.translation.y);
-                    let shape = shapes::RegularPolygon {
-                        sides: 30,
-                        feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
-                        ..shapes::RegularPolygon::default()
-                    };
-                    commands.spawn_bundle(GeometryBuilder::build_as(
-                        &shape,
-                        DrawMode::Fill (
-                            FillMode::color(Color::BLACK),
-                        ),
-                        Transform {
-                            translation: Vec3::new(ai.translation.x, ai.translation.y, 0.0),
+                    // let shape = shapes::RegularPolygon {
+                    //     sides: 30,
+                    //     feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
+                    //     ..shapes::RegularPolygon::default()
+                    // };
+                    // commands.spawn(GeometryBuilder::build_as(
+                    //     &shape,
+                    //     DrawMode::Fill (
+                    //         FillMode::color(Color::BLACK),
+                    //     ),
+                    //     Transform {
+                    //         translation: Vec3::new(ai.translation.x, ai.translation.y, 0.0),
+                    //         ..default()
+                    //     },
+                    // )).insert(Bullet {from: TurretOf::Ai} )
+                    // // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
+                    // .insert(Name::new("Bullet"))
+                    // .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
+                    commands.spawn((
+                        MaterialMesh2dBundle {
+                            mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
+                            material: materials.add(ColorMaterial::from(Color::PURPLE)),
+                            transform: Transform::from_translation(Vec3::new(ai.translation.x, ai.translation.y, 0.0)),
                             ..default()
                         },
-                    )).insert(Bullet {from: TurretOf::Ai} )
-                    // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
-                    .insert(Name::new("Bullet"))
-                    .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
+                        Name::new("Bullet"),
+                        Bullet {from: TurretOf::Ai},
+                        Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()},
+                    ));
                 }
 
-                if LENGTH + FADE + 1.0 < time.seconds_since_startup() as f32 {
+                if LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 {
                     attack_timer.value -= time.delta_seconds();
                 }
                 player_count += 1;
@@ -573,18 +652,21 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
 fn keep_healthbars_on_screen(
     mut healthbar: Query<(&mut Transform, &GlobalTransform), (With<Healthbar>, Without<HealthbarBorder>)>,
     mut healthbar_border: Query<(&mut Transform, &GlobalTransform), (With<HealthbarBorder>, Without<Healthbar>)>,
-    windows: ResMut<Windows>,
+    primary_window: Query<&Window, With<PrimaryWindow>>
 ) {
-    let window = windows.get_primary().unwrap();
+    let Ok(window) = primary_window.get_single() else {
+        return;
+
+    };
 
     for (mut transform, global_transform) in healthbar.iter_mut() {
         let ceiling = window.height()/2.0 - 18.0/2.0;
-        let player_height = global_transform.translation.y - transform.translation.y;
+        let player_height = global_transform.translation().y - transform.translation.y;
         transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
     }
     for (mut transform, global_transform) in healthbar_border.iter_mut() {
         let ceiling = window.height()/2.0 - 18.0/2.0;
-        let player_height = global_transform.translation.y - transform.translation.y;
+        let player_height = global_transform.translation().y - transform.translation.y;
         transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
 
         // let ceiling = window.width()/2.0 - 18.0/2.0;
@@ -678,9 +760,12 @@ fn kill_bullets(
     wall_hit_deep: Res<WallHitDeepSound>,
     mut commands: Commands,
     mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,
-    windows: Res<Windows>,
+    primary_window: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let window = windows.get_primary().unwrap();
+    let Ok(window) = primary_window.get_single() else {
+        return;
+
+    };
 
     for ((transform, bullet_entity), _bullet) in bullets.iter_mut() {
         if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
@@ -693,74 +778,74 @@ fn kill_bullets(
     }
 }
 
-fn toggle_inspector(
-    input: ResMut<Input<KeyCode>>,
-    mut window_params: ResMut<WorldInspectorParams>,
-) {
-    if input.just_pressed(KeyCode::Grave) {
-        window_params.enabled = !window_params.enabled
-    }
-}
+// fn toggle_inspector(
+//     input: ResMut<Input<KeyCode>>,
+//     mut window_params: ResMut<WorldInspectorParams>,
+// ) {
+//     if input.just_pressed(KeyCode::Grave) {
+//         window_params.enabled = !window_params.enabled
+//     }
+// }
 
-fn button_system(
-    mut interaction_query: Query<(&Interaction, &mut UiColor, &Children), (Changed<Interaction>, With<Button>),>,
-    active_ai: Query<&mut Active>,
-    mut commands: Commands,
-    text_query: Query<&mut Text>,
-) {
-    for (interaction, mut color, children) in interaction_query.iter_mut() {
-        let text = text_query.get(children[0]).unwrap();
-        match *interaction {
-            Interaction::Clicked => {
-                if text.sections[0].value == "Spawn Player" {
-                    let mut no_players = false;
-                    for active in active_ai.iter() {
-                        // If an AI is innactive, then there must be no players
-                        if !active.value {
-                            no_players = true;
-                        }
-                    }
-                    if no_players {
-                        // Spawn player
-                        println!("Spawn Player");
-                        commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
-                        .insert(Player)
-                        .insert(Name::new("Player"))
-                        .with_children(|parent| {
-                            parent.spawn_bundle(BearingBundle::new())
-                            .with_children(|parent| {
-                                parent.spawn_bundle(TurretBundle::new());
-                            });
-                            parent.spawn_bundle(HealthbarBundle::new());
-                            parent.spawn_bundle(HealthbarBorderBundle::new());
-                        });
-                    }
-                } else if text.sections[0].value == "Spawn AI" {
-                    println!("Spawning AI");
+// fn button_system(
+//     mut interaction_query: Query<(&Interaction, &mut UiColor, &Children), (Changed<Interaction>, With<Button>),>,
+//     active_ai: Query<&mut Active>,
+//     mut commands: Commands,
+//     text_query: Query<&mut Text>,
+// ) {
+//     for (interaction, mut color, children) in interaction_query.iter_mut() {
+//         let text = text_query.get(children[0]).unwrap();
+//         match *interaction {
+//             Interaction::Clicked => {
+//                 if text.sections[0].value == "Spawn Player" {
+//                     let mut no_players = false;
+//                     for active in active_ai.iter() {
+//                         // If an AI is innactive, then there must be no players
+//                         if !active.value {
+//                             no_players = true;
+//                         }
+//                     }
+//                     if no_players {
+//                         // Spawn player
+//                         println!("Spawn Player");
+//                         commands.spawn_bundle(TankBundle::new(Color::rgb(0.35, 0.6, 0.99)))
+//                         .insert(Player)
+//                         .insert(Name::new("Player"))
+//                         .with_children(|parent| {
+//                             parent.spawn_bundle(BearingBundle::new())
+//                             .with_children(|parent| {
+//                                 parent.spawn_bundle(TurretBundle::new());
+//                             });
+//                             parent.spawn_bundle(HealthbarBundle::new());
+//                             parent.spawn_bundle(HealthbarBorderBundle::new());
+//                         });
+//                     }
+//                 } else if text.sections[0].value == "Spawn AI" {
+//                     println!("Spawning AI");
 
-                    commands.spawn_bundle(TankBundle::new(Color::ORANGE))
-                    .insert_bundle(AiBundle::new())
-                    .insert(Name::new("Enemy"))
-                    .with_children(|parent| {
-                        parent.spawn_bundle(BearingBundle::new())
-                        .with_children(|parent| {
-                            parent.spawn_bundle(TurretBundle::new());
-                        });
-                        parent.spawn_bundle(HealthbarBundle::new());
-                        parent.spawn_bundle(HealthbarBorderBundle::new());
-                    });
-                }
-                *color = Color::MAROON.into();
-            }
-            Interaction::Hovered => {
-                *color = Color::RED.into();
-            }
-            Interaction::None => {
-                *color = Color::ORANGE_RED.into();
-            }
-        }
-    }
-}
+//                     commands.spawn_bundle(TankBundle::new(Color::ORANGE))
+//                     .insert_bundle(AiBundle::new())
+//                     .insert(Name::new("Enemy"))
+//                     .with_children(|parent| {
+//                         parent.spawn_bundle(BearingBundle::new())
+//                         .with_children(|parent| {
+//                             parent.spawn_bundle(TurretBundle::new());
+//                         });
+//                         parent.spawn_bundle(HealthbarBundle::new());
+//                         parent.spawn_bundle(HealthbarBorderBundle::new());
+//                     });
+//                 }
+//                 *color = Color::MAROON.into();
+//             }
+//             Interaction::Hovered => {
+//                 *color = Color::RED.into();
+//             }
+//             Interaction::None => {
+//                 *color = Color::ORANGE_RED.into();
+//             }
+//         }
+//     }
+// }
 
 fn update_kills_text(
     ai_killed: ResMut<AiKilled>,

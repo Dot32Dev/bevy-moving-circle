@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use bevy_prototype_lyon::prelude::*; // Draw circles with ease
-use bevy_inspector_egui::Inspectable;
+// use bevy_prototype_lyon::prelude::*; // Draw circles with ease
+// use bevy_inspector_egui::Inspectable;
 
 pub const TANK_SPEED: f32 = 0.37;
 pub const TANK_SIZE: f32 = 20.0; 
@@ -32,7 +32,8 @@ pub struct AttackTimer {
     pub value: f32,
 }
 
-#[derive(Inspectable, Component)]
+// #[derive(Inspectable, Component)]
+#[derive(Component)]
 pub struct Health {
     pub value: u8,
 }
@@ -60,9 +61,9 @@ pub struct Healthbar;
 pub struct HealthbarBorder;
 
 #[derive(Bundle)]
-pub struct TankBundle {
+pub struct TankBundle<M: bevy::sprite::Material2d> {
     #[bundle]
-    geometry_builder: bevy_prototype_lyon::entity::ShapeBundle,
+    material_bundle: bevy::sprite::MaterialMesh2dBundle<M>,
     tank: Tank,
     attack_timer: AttackTimer,
     health: Health,
@@ -185,26 +186,52 @@ impl TurretBundle {
     }
 }
 
-impl TankBundle {
-    pub fn new(colour: Color) -> TankBundle {
-        let shape = shapes::RegularPolygon { // Define circle
-            sides: 30,
-            feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
-            ..shapes::RegularPolygon::default()
-        };
+impl TankBundle<ColorMaterial> {
+    pub fn new(
+        colour: Color,
+
+        mut meshes: &mut ResMut<Assets<Mesh>>,
+        mut materials: &mut ResMut<Assets<ColorMaterial>>,
+    ) -> TankBundle<ColorMaterial> {
+        // let shape = shapes::RegularPolygon { // Define circle
+        //     sides: 30,
+        //     feature: shapes::RegularPolygonFeature::Radius(TANK_SIZE),
+        //     ..shapes::RegularPolygon::default()
+        // };
+
+        // commands.spawn((
+        //     MaterialMesh2dBundle {
+        //         mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
+        //         material: materials.add(ColorMaterial::from(Color::PURPLE)),
+        //         transform: Transform::from_translation(Vec3::new(ai.translation.x, ai.translation.y, 0.0)),
+        //         ..default()
+        //     },
+        //     Name::new("Bullet"),
+        //     Bullet {from: TurretOf::Player},
+        //     Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()},
+        // ));
 
         TankBundle {
-            geometry_builder: GeometryBuilder::build_as(
-                &shape,
-                DrawMode::Outlined {
-                    fill_mode: FillMode::color(colour),
-                    outline_mode: StrokeMode::new(Color::BLACK, 4.0),
-                },
-                Transform {
+            // geometry_builder: GeometryBuilder::build_as(
+            //     &shape,
+            //     DrawMode::Outlined {
+            //         fill_mode: FillMode::color(colour),
+            //         outline_mode: StrokeMode::new(Color::BLACK, 4.0),
+            //     },
+            //     Transform {
+            //         translation: Vec3::new(0.0, 0.0, 1.0),
+            //         ..default()
+            //     },
+            // ),
+            material_bundle: bevy::sprite::MaterialMesh2dBundle {
+                mesh: meshes.add(shape::Circle::new(TANK_SIZE).into()).into(),
+                material: materials.add(ColorMaterial::from(colour)),
+                transform: Transform {
                     translation: Vec3::new(0.0, 0.0, 1.0),
                     ..default()
                 },
-            ),
+                ..default()
+            },
             tank: Tank,
             attack_timer: AttackTimer {
                 value: 0.0,
