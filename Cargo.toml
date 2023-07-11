@@ -8,12 +8,12 @@ description = "A top-down game about moving a player"
 
 [dependencies]
 # bevy = { version = "0.7.0", features = ["dynamic"] }
-bevy = "0.10.1"
+bevy = "0.11"
 # bevy_prototype_lyon = "0.8.0"
-dot32_intro = { git = "https://github.com/Dot32IsCool/dot32-intro-rs", rev = "a704742"}
-bevy_embedded_assets = "0.7.0"
+dot32_intro = { git = "https://github.com/Dot32IsCool/dot32-intro-rs", rev = "8bc8bd5"}
+bevy_embedded_assets = "0.8.0"
 rand = "0.8.5"
-bevy-inspector-egui = "0.18.0"
+# bevy-inspector-egui = "0.18.0"
 
 [profile.release]
 opt-level = 'z'     # Optimize for size.

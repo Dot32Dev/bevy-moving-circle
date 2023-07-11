@@ -62,7 +62,7 @@ pub struct HealthbarBorder;
 
 #[derive(Bundle)]
 pub struct TankBundle<M: bevy::sprite::Material2d> {
-    #[bundle]
+    // #[bundle]
     material_bundle: bevy::sprite::MaterialMesh2dBundle<M>,
     tank: Tank,
     attack_timer: AttackTimer,
@@ -80,7 +80,7 @@ pub struct AiBundle {
 
 #[derive(Bundle)]
 pub struct HealthbarBundle {
-    #[bundle]
+    // #[bundle]
     sprite_bundle: SpriteBundle,
     healthbar: Healthbar,
 }
@@ -107,7 +107,7 @@ impl HealthbarBundle {
 
 #[derive(Bundle)]
 pub struct HealthbarBorderBundle {
-    #[bundle]
+    // #[bundle]
     sprite_bundle: SpriteBundle,
     healthbar_border: HealthbarBorder,
 }
@@ -134,7 +134,7 @@ impl HealthbarBorderBundle {
 
 #[derive(Bundle)]
 pub struct BearingBundle {
-    #[bundle]
+    // #[bundle]
     sprite_bundle: SpriteBundle,
     bearing: Bearing,
 }
@@ -161,7 +161,7 @@ impl BearingBundle {
 
 #[derive(Bundle)]
 pub struct TurretBundle {
-    #[bundle]
+    // #[bundle]
     sprite_bundle: SpriteBundle,
     turret: Turret,
 }

@@ -1,6 +1,9 @@
 #![windows_subsystem = "windows"]
 
 // TODO: Ai only dodge when there are player bullets in the scene?
+// TODO: Ai Rush player when health is low?
+// TODO: Ai only shoot when player is in sight?
+// TODO: Ai run away when their health is low?
 // TODO: Add respawn button when you die https://github.com/bevyengine/bevy/blob/main/examples/ui/button.rs
 // TODO: Add k/d ratio at the top of the screen
 // TODO: Rounded corners UI
