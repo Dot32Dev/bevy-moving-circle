@@ -96,12 +96,12 @@ fn main() {
     // .add_system(collide_tanks)
     // .add_system(update_kills_text)
     .add_systems(Update, (
-        // mouse_button_input,
-        // ai_rotate,
+        mouse_button_input,
+        ai_rotate,
         keep_tanks_on_screen,
         keep_healthbars_on_screen,
-        // kill_bullets,
-        // hurt_tanks,
+        kill_bullets,
+        hurt_tanks,
         collide_tanks,
         update_kills_text,
     ))
@@ -552,7 +552,10 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                 for (player, mut attack_timer, children) in positions.iter_mut() {
                     let window_size = Vec2::new(window.width(), window.height());
                     // let diff = Vec3::new(vec.x - window.width()/2.0, vec.y - window.height()/2.0, 0.) - player.translation;
-                    let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation;
+                    let mut mouse_coords = vec;
+                    // flip the mouse Y position
+                    mouse_coords.y = mouse_coords.y*-1.0 + window_size.y;
+                    let diff = mouse_coords.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation;
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
 
                     // for (mut joint, turrets) in bearing.iter_mut() {
@@ -619,8 +622,10 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             },
                             Name::new("Bullet"),
                             Bullet {from: TurretOf::Player},
-                            Direction{dir:(vec - player.translation.truncate() - window_size/2.0).normalize()},
+                            Direction{dir:(mouse_coords - player.translation.truncate() - window_size/2.0).normalize()},
                         ));
+                        // print mouse coorindates (vec)
+                        // println!("thing {}", mouse_coords.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation);
                     }
 
                     attack_timer.value += time.delta_seconds()
