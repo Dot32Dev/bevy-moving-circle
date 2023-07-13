@@ -13,8 +13,8 @@ mod tanks;
 use bevy::{
     prelude::*, 
     window::*, 
-    app::AppExit, // For MacOs Cmd+W to close the window
-    sprite::MaterialMesh2dBundle,
+    // app::AppExit, // For MacOs Cmd+W to close the window
+    sprite::MaterialMesh2dBundle, reflect::erased_serde::private::serde::__private::de,
     // core::FixedTimestep
 };
 
@@ -136,20 +136,62 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
     println!("{}", env::consts::OS); // Prints the current OS.
     
-    let gunshot = asset_server.load("ShotsFired.ogg");
-    commands.insert_resource(GunshotSound(gunshot));
-    let gunshot_deep = asset_server.load("ShotsFiredDeep.ogg");
-    commands.insert_resource(GunshotDeepSound(gunshot_deep));
+    // let gunshot = asset_server.load("ShotsFired.ogg");
+    // commands.insert_resource(GunshotSound(gunshot));
+    // let gunshot_deep = asset_server.load("ShotsFiredDeep.ogg");
+    // commands.insert_resource(GunshotDeepSound(gunshot_deep));
+    commands.spawn((
+        AudioBundle {
+            source: asset_server.load("ShotsFired.ogg"),
+            ..default()
+        },
+        GunShotSound,
+    ));
+    commands.spawn((
+        AudioBundle {
+            source: asset_server.load("ShotsFiredDeep.ogg"),
+            ..default()
+        },
+        GunShotDeepSound,
+    ));
 
-    let tank_hit = asset_server.load("TankHit.ogg");
-    commands.insert_resource(TankHitSound(tank_hit));
-    let tank_hit_deep = asset_server.load("TankHitDeep.ogg");
-    commands.insert_resource(TankHitDeepSound(tank_hit_deep));
+    // let tank_hit = asset_server.load("TankHit.ogg");
+    // commands.insert_resource(TankHitSound(tank_hit));
+    // let tank_hit_deep = asset_server.load("TankHitDeep.ogg");
+    // commands.insert_resource(TankHitDeepSound(tank_hit_deep));
+    commands.spawn((
+        AudioBundle {
+            source: asset_server.load("TankHit.ogg"),
+            ..default()
+        },
+        TankHitSound,
+    ));
+    commands.spawn((
+        AudioBundle {
+            source: asset_server.load("TankHitDeep.ogg"),
+            ..default()
+        },
+        TankHitDeepSound,
+    ));
 
-    let wall_hit = asset_server.load("WallHit.ogg");
-    commands.insert_resource(WallHitSound(wall_hit));
-    let wall_hit_deep = asset_server.load("WallHitDeep.ogg");
-    commands.insert_resource(WallHitDeepSound(wall_hit_deep));
+    // let wall_hit = asset_server.load("WallHit.ogg");
+    // commands.insert_resource(WallHitSound(wall_hit));
+    // let wall_hit_deep = asset_server.load("WallHitDeep.ogg");
+    // commands.insert_resource(WallHitDeepSound(wall_hit_deep));
+    commands.spawn((
+        AudioBundle {
+            source: asset_server.load("WallHit.ogg"),
+            ..default()
+        },
+        WallHitSound,
+    ));
+    commands.spawn((
+        AudioBundle {
+            source: asset_server.load("WallHitDeep.ogg"),
+            ..default()
+        },
+        WallHitDeepSound,
+    ));
 
     // commands.spawn_bundle(ButtonBundle {
     //     style: Style {
@@ -224,20 +266,35 @@ fn setup(
     // }).insert(KillsText);
     
 }
-#[derive(Resource)]
-struct GunshotSound(Handle<AudioSource>);
-#[derive(Resource)]
-struct GunshotDeepSound(Handle<AudioSource>);
+// #[derive(Resource)]
+// struct GunshotSound(Handle<AudioSource>);
+// #[derive(Resource)]
+// struct GunshotDeepSound(Handle<AudioSource>);
 
-#[derive(Resource)]
-struct TankHitSound(Handle<AudioSource>);
-#[derive(Resource)]
-struct TankHitDeepSound(Handle<AudioSource>);
+// #[derive(Resource)]
+// struct TankHitSound(Handle<AudioSource>);
+// #[derive(Resource)]
+// struct TankHitDeepSound(Handle<AudioSource>);
 
-#[derive(Resource)]
-struct WallHitSound(Handle<AudioSource>);
-#[derive(Resource)]
-struct WallHitDeepSound(Handle<AudioSource>);
+// #[derive(Resource)]
+// struct WallHitSound(Handle<AudioSource>);
+// #[derive(Resource)]
+// struct WallHitDeepSound(Handle<AudioSource>);
+
+#[derive(Component)]
+struct GunShotSound;
+#[derive(Component)]
+struct GunShotDeepSound;
+
+#[derive(Component)]
+struct TankHitSound;
+#[derive(Component)]
+struct TankHitDeepSound;
+
+#[derive(Component)]
+struct WallHitSound;
+#[derive(Component)]
+struct WallHitDeepSound;
 
 enum TurretOf {
 	Player,
@@ -472,9 +529,11 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     buttons: Res<Input<MouseButton>>, 
     primary_window: Query<&Window, With<PrimaryWindow>>,
     time: Res<Time>,
-    audio: Res<Audio>,
-    gunshot: Res<GunshotSound>,
-    gunshot_deep: Res<GunshotDeepSound>,
+    // audio: Res<Audio>,
+    // gunshot: Res<GunshotSound>,
+    // gunshot_deep: Res<GunshotDeepSound>,
+    gunshot: Query<&AudioSink, With<GunShotSound>>,
+    gunshot_deep: Query<&AudioSink, With<GunShotDeepSound>>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
     mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Turret>)>,
@@ -510,8 +569,16 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4  && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
                         attack_timer.value = 0.0;
                         if !MUTE {
-                            audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            // audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            // audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            for sink in gunshot.iter() {
+                                sink.set_volume(0.2);
+                                sink.play();
+                            }
+                            for sink in gunshot_deep.iter() {
+                                sink.set_volume(0.2);
+                                sink.play();
+                            }
                         }
 
                         for child in children.iter() {
@@ -567,9 +634,11 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
 fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     time: Res<Time>,
-    audio: Res<Audio>,
-    gunshot: Res<GunshotSound>,
-    gunshot_deep: Res<GunshotDeepSound>,
+    // audio: Res<Audio>,
+    // gunshot: Res<GunshotSound>,
+    // gunshot_deep: Res<GunshotDeepSound>,
+    gunshot: Query<&AudioSink, With<GunShotSound>>,
+    gunshot_deep: Query<&AudioSink, With<GunShotDeepSound>>,
     players: Query<&Transform, (Without<Ai>, With<Player>)>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children, &mut Active), With<Ai>>,
@@ -603,8 +672,16 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 {
                     attack_timer.value =rand::thread_rng().gen_range(5 ..= 14) as f32 /10.0 ;
                     if !MUTE {
-                        audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                        audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        // audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        // audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                        for sink in gunshot.iter() {
+                            sink.set_volume(0.2);
+                            sink.play();
+                        }
+                        for sink in gunshot_deep.iter() {
+                            sink.set_volume(0.2);
+                            sink.play();
+                        }
                     }
 
                     for child in children.iter() {
@@ -702,9 +779,11 @@ fn keep_healthbars_on_screen(
 }
 
 fn hurt_tanks(
-    audio: Res<Audio>,
-    tank_hit: Res<TankHitSound>,
-    tank_hit_deep: Res<TankHitDeepSound>,
+    // audio: Res<Audio>,
+    // tank_hit: Res<TankHitSound>,
+    // tank_hit_deep: Res<TankHitDeepSound>,
+    tank_hit: Query<&AudioSink, With<TankHitSound>>,
+    tank_hit_deep: Query<&AudioSink, With<TankHitDeepSound>>,
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
     mut ais: Query<(&Transform, Entity, &mut Health, &Children, &mut Velocity), (Without<Player>, With<Ai>, Without<Bullet>)>,
@@ -736,8 +815,16 @@ fn hurt_tanks(
                         }
                         commands.entity(bullet_entity).despawn(); 
                         if !MUTE {
-                            audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
+                            // audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            // audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
+                            for sink in tank_hit.iter() {
+                                sink.set_volume(0.2);
+                                sink.play();
+                            }
+                            for sink in tank_hit_deep.iter() {
+                                sink.set_volume(0.1);
+                                sink.play();
+                            }
                         }
                     }
                 }
@@ -763,8 +850,16 @@ fn hurt_tanks(
                         }
                         commands.entity(bullet_entity).despawn(); 
                         if !MUTE {
-                            audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
+                            // audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                            // audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
+                            for sink in tank_hit.iter() {
+                                sink.set_volume(0.2);
+                                sink.play();
+                            }
+                            for sink in tank_hit_deep.iter() {
+                                sink.set_volume(0.1);
+                                sink.play();
+                            }
                         }
                     }
                 }
@@ -781,9 +876,11 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
 }
 
 fn kill_bullets(
-    audio: Res<Audio>,
-    wall_hit: Res<WallHitSound>,
-    wall_hit_deep: Res<WallHitDeepSound>,
+    // audio: Res<Audio>,
+    // wall_hit: Res<WallHitSound>,
+    // wall_hit_deep: Res<WallHitDeepSound>,
+    wall_hit: Query<&AudioSink, With<WallHitSound>>,
+    wall_hit_deep: Query<&AudioSink, With<WallHitDeepSound>>,
     mut commands: Commands,
     mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,
     primary_window: Query<&Window, With<PrimaryWindow>>,
@@ -797,8 +894,16 @@ fn kill_bullets(
         if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
             commands.entity(bullet_entity).despawn(); 
             if !MUTE {
-                audio.play_with_settings(wall_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                audio.play_with_settings(wall_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                // audio.play_with_settings(wall_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                // audio.play_with_settings(wall_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
+                for sink in wall_hit.iter() {
+                    sink.set_volume(0.2);
+                    sink.play();
+                }
+                for sink in wall_hit_deep.iter() {
+                    sink.set_volume(0.2);
+                    sink.play();
+                }
             }
         }
     }
