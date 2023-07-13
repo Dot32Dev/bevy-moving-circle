@@ -13,7 +13,8 @@ mod tanks;
 use bevy::{
     prelude::*, 
     window::*, 
-    app::AppExit, sprite::MaterialMesh2dBundle, // For MacOs Cmd+W to close the window
+    app::AppExit, // For MacOs Cmd+W to close the window
+    sprite::MaterialMesh2dBundle,
     // core::FixedTimestep
 };
 
@@ -63,9 +64,14 @@ fn main() {
     )
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .insert_resource(AiKilled { score: 0})
-    .add_startup_system(create_player)
-    .add_startup_system(create_enemy)
-    .add_startup_system(setup)
+    // .add_startup_system(create_player)
+    // .add_startup_system(create_enemy)
+    // .add_startup_system(setup)
+    .add_systems(Startup, (
+        create_player,
+        create_enemy,
+        setup,
+    ))
     // .add_plugins_with(DefaultPlugins, |group| {
     //     group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
     // })
@@ -80,15 +86,25 @@ fn main() {
     // .add_system(toggle_inspector)
     // .add_plugin(ShapePlugin)
     // .add_system(quit_and_resize)
-    .add_system(mouse_button_input)
-    .add_system(ai_rotate)
-    .add_system(keep_tanks_on_screen)
-    .add_system(keep_healthbars_on_screen)
-    .add_system(kill_bullets)
-    // .add_system(button_system)
-    .add_system(hurt_tanks)
-    .add_system(collide_tanks)
-    .add_system(update_kills_text)
+    // .add_system(mouse_button_input)
+    // .add_system(ai_rotate)
+    // .add_system(keep_tanks_on_screen)
+    // .add_system(keep_healthbars_on_screen)
+    // .add_system(kill_bullets)
+    // // .add_system(button_system)
+    // .add_system(hurt_tanks)
+    // .add_system(collide_tanks)
+    // .add_system(update_kills_text)
+    .add_systems(Update, (
+        // mouse_button_input,
+        // ai_rotate,
+        keep_tanks_on_screen,
+        keep_healthbars_on_screen,
+        // kill_bullets,
+        // hurt_tanks,
+        collide_tanks,
+        update_kills_text,
+    ))
     // .add_system_set(
     //     SystemSet::new()
     //     .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
@@ -96,11 +112,18 @@ fn main() {
     //     .with_system(movement)
     //     .with_system(ai_movement)
     // )
-    .add_system(update_bullets)
-    .add_system(movement)
-    .add_system(ai_movement)
+    // .add_system(update_bullets)
+    // .add_system(movement)
+    // .add_system(ai_movement)
+    .insert_resource(FixedTime::new_from_secs(TIME_STEP))
+    .add_systems(FixedUpdate, (
+        update_bullets,
+        movement,
+        ai_movement,
+    ))
     // 
-    .add_plugin(Intro)
+    // .add_plugin(Intro)
+    .add_plugins(Intro)
     .run();
 }
 
