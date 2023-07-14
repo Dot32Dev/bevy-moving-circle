@@ -27,7 +27,7 @@ use rand::Rng;
 use tanks::*;
 
 const TIME_STEP: f32 = 1.0 / 120.0; // FPS
-const MUTE: bool = true;
+const MUTE: bool = false;
 
 const BULLET_SIZE: f32 = 6.0; 
 const KNOCKBACK: f32 = 5.0;
@@ -575,12 +575,13 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             // audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                             // audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                             for sink in gunshot.iter() {
-                                sink.set_volume(0.2);
+                                // sink.set_volume(0.2);
                                 sink.play();
                             }
                             for sink in gunshot_deep.iter() {
-                                sink.set_volume(0.2);
+                                // sink.set_volume(0.2);
                                 sink.play();
+                                println!("played sound");
                             }
                         }
 
@@ -616,7 +617,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                         commands.spawn((
                             MaterialMesh2dBundle {
                                 mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
-                                material: materials.add(ColorMaterial::from(Color::PURPLE)),
+                                material: materials.add(ColorMaterial::from(Color::BLACK)),
                                 transform: Transform::from_translation(Vec3::new(player.translation.x, player.translation.y, 0.0)),
                                 ..default()
                             },
@@ -680,12 +681,13 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                         // audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                         // audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                         for sink in gunshot.iter() {
-                            sink.set_volume(0.2);
+                            // sink.set_volume(0.2);
                             sink.play();
                         }
                         for sink in gunshot_deep.iter() {
-                            sink.set_volume(0.2);
+                            // sink.set_volume(0.2);
                             sink.play();
+                            println!("played sound");
                         }
                     }
 
@@ -721,7 +723,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                     commands.spawn((
                         MaterialMesh2dBundle {
                             mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
-                            material: materials.add(ColorMaterial::from(Color::PURPLE)),
+                            material: materials.add(ColorMaterial::from(Color::BLACK)),
                             transform: Transform::from_translation(Vec3::new(ai.translation.x, ai.translation.y, 0.0)),
                             ..default()
                         },
@@ -823,12 +825,13 @@ fn hurt_tanks(
                             // audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                             // audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
                             for sink in tank_hit.iter() {
-                                sink.set_volume(0.2);
+                                // sink.set_volume(0.2);
                                 sink.play();
                             }
                             for sink in tank_hit_deep.iter() {
-                                sink.set_volume(0.1);
+                                // sink.set_volume(0.1);
                                 sink.play();
+                                println!("played sound");
                             }
                         }
                     }
@@ -858,12 +861,13 @@ fn hurt_tanks(
                             // audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                             // audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
                             for sink in tank_hit.iter() {
-                                sink.set_volume(0.2);
+                                // sink.set_volume(0.2);
                                 sink.play();
                             }
                             for sink in tank_hit_deep.iter() {
-                                sink.set_volume(0.1);
+                                // sink.set_volume(0.1);
                                 sink.play();
+                                println!("played sound");
                             }
                         }
                     }
@@ -902,12 +906,13 @@ fn kill_bullets(
                 // audio.play_with_settings(wall_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                 // audio.play_with_settings(wall_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
                 for sink in wall_hit.iter() {
-                    sink.set_volume(0.2);
+                    // sink.set_volume(0.2);
                     sink.play();
                 }
                 for sink in wall_hit_deep.iter() {
-                    sink.set_volume(0.2);
+                    // sink.set_volume(0.2);
                     sink.play();
+                    println!("played sound");
                 }
             }
         }
