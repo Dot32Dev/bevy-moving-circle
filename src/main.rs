@@ -14,7 +14,7 @@ use bevy::{
     prelude::*, 
     window::*, 
     // app::AppExit, // For MacOs Cmd+W to close the window
-    sprite::MaterialMesh2dBundle, reflect::erased_serde::private::serde::__private::de,
+    sprite::MaterialMesh2dBundle,
     // core::FixedTimestep
 };
 
@@ -129,7 +129,7 @@ fn main() {
 
 fn setup(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    // asset_server: Res<AssetServer>,
 ) {
     // commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     // commands.spawn_bundle(UiCameraBundle::default());
@@ -283,13 +283,25 @@ fn create_player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(TankBundle::new(Color::rgb(0.35, 0.6, 0.99), &mut meshes, &mut materials))
+    commands.spawn(TankBundle::new(&mut meshes, &mut materials))
     .insert(Player)
     .insert(Name::new("Player"))
     .with_children(|parent| {
-        parent.spawn(BearingBundle::new())
+        // parent.spawn(BearingBundle::new())
+        // .with_children(|parent| {
+        //     parent.spawn(TurretBundle::new());
+        // });
+        parent.spawn(MaterialMesh2dBundle {
+            mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
+            material: materials.add(Color::rgb(0.35, 0.6, 0.99).into()),
+            transform: Transform::from_xyz(0.0, 0.0, 0.1),
+            ..Default::default()
+        })
         .with_children(|parent| {
-            parent.spawn(TurretBundle::new());
+            parent.spawn(BearingBundle::new())
+            .with_children(|parent| {
+                parent.spawn(TurretBundle::new());
+            });
         });
         parent.spawn(HealthbarBundle::new());
         parent.spawn(HealthbarBorderBundle::new());
@@ -303,13 +315,25 @@ fn create_enemy(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for _ in 0..2 {
-        commands.spawn(TankBundle::new(Color::ORANGE, &mut meshes, &mut materials))
+        commands.spawn(TankBundle::new(&mut meshes, &mut materials))
         .insert(AiBundle::new())
         .insert(Name::new("Enemy"))
         .with_children(|parent| {
-            parent.spawn(BearingBundle::new())
+            // parent.spawn(BearingBundle::new())
+            // .with_children(|parent| {
+            //     parent.spawn(TurretBundle::new());
+            // });
+            parent.spawn(MaterialMesh2dBundle {
+                mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
+                material: materials.add(Color::rgb(0.89, 0.56, 0.26).into()),
+                transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                ..Default::default()
+            })
             .with_children(|parent| {
-                parent.spawn(TurretBundle::new());
+                parent.spawn(BearingBundle::new())
+                .with_children(|parent| {
+                    parent.spawn(TurretBundle::new());
+                });
             });
             parent.spawn(HealthbarBundle::new());
             parent.spawn(HealthbarBorderBundle::new());
@@ -495,7 +519,8 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
-    mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Turret>)>,
+    mut tank_child_query: Query<&Children, (Without<Player>, Without<Turret>, Without<Bearing>)>,
+    mut bearings: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Player>)>,
 
     mut meshes: ResMut<Assets<Mesh>>,
@@ -519,11 +544,23 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
                     // for (mut joint, turrets) in bearing.iter_mut() {
                     for child in children.iter() {
-                        if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                            joint.rotation = Quat::from_rotation_z(angle);
-                            for turret in turrets.iter() {
-                                if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                                    transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                        // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                        //     joint.rotation = Quat::from_rotation_z(angle);
+                        //     for turret in turrets.iter() {
+                        //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                        //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                        //         }
+                        //     }
+                        // }
+                        if let Ok(tank_child) = tank_child_query.get_mut(*child) {
+                            for bearing in tank_child.iter() {
+                                if let Ok((mut joint, turrets)) = bearings.get_mut(*bearing) {
+                                    joint.rotation = Quat::from_rotation_z(angle);
+                                    for turret in turrets.iter() {
+                                        if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                            transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -558,11 +595,33 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             ));
                         }
 
+                        // for child in children.iter() {
+                        //     if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
+                        //         for turret in turrets.iter() {
+                        //             if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                        //                 transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                        //             }
+                        //         }
+                        //     }
+                        // }
                         for child in children.iter() {
-                            if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
-                                for turret in turrets.iter() {
-                                    if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                                        transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                            // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                            //     joint.rotation = Quat::from_rotation_z(angle);
+                            //     for turret in turrets.iter() {
+                            //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                            //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                            //         }
+                            //     }
+                            // }
+                            if let Ok(tank_child) = tank_child_query.get_mut(*child) {
+                                for bearing in tank_child.iter() {
+                                    if let Ok((mut joint, turrets)) = bearings.get_mut(*bearing) {
+                                        joint.rotation = Quat::from_rotation_z(angle);
+                                        for turret in turrets.iter() {
+                                            if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                                transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -622,7 +681,8 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     players: Query<&Transform, (Without<Ai>, With<Player>)>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children, &mut Active), With<Ai>>,
-    mut bearing: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Ai>, Without<Turret>)>,
+    mut tank_child_query: Query<&Children, (Without<Ai>, Without<Turret>, Without<Bearing>)>,
+    mut bearings: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Ai>, Without<Turret>)>,
     mut transform_query: Query<&mut Transform, (With<Turret>, Without<Ai>, Without<Player>)>,
 
     mut meshes: ResMut<Assets<Mesh>>,
@@ -638,12 +698,34 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
                 // ai.rotation = Quat::from_rotation_z(angle);
 
+                // for child in children.iter() {
+                //     if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                //         joint.rotation = Quat::from_rotation_z(angle);
+                //         for turret in turrets.iter() {
+                //             if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                //                 transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                //             }
+                //         }
+                //     }
+                // }
                 for child in children.iter() {
-                    if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                        joint.rotation = Quat::from_rotation_z(angle);
-                        for turret in turrets.iter() {
-                            if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                                transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                    // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                    //     joint.rotation = Quat::from_rotation_z(angle);
+                    //     for turret in turrets.iter() {
+                    //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                    //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                    //         }
+                    //     }
+                    // }
+                    if let Ok(tank_child) = tank_child_query.get_mut(*child) {
+                        for bearing in tank_child.iter() {
+                            if let Ok((mut joint, turrets)) = bearings.get_mut(*bearing) {
+                                joint.rotation = Quat::from_rotation_z(angle);
+                                for turret in turrets.iter() {
+                                    if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                        transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                                    }
+                                }
                             }
                         }
                     }
@@ -679,11 +761,33 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                         ));
                     }
 
+                    // for child in children.iter() {
+                    //     if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
+                    //         for turret in turrets.iter() {
+                    //             if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                    //                 transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                    //             }
+                    //         }
+                    //     }
+                    // }
                     for child in children.iter() {
-                        if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
-                            for turret in turrets.iter() {
-                                if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                                    transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                        // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                        //     joint.rotation = Quat::from_rotation_z(angle);
+                        //     for turret in turrets.iter() {
+                        //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                        //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                        //         }
+                        //     }
+                        // }
+                        if let Ok(tank_child) = tank_child_query.get_mut(*child) {
+                            for bearing in tank_child.iter() {
+                                if let Ok((mut joint, turrets)) = bearings.get_mut(*bearing) {
+                                    joint.rotation = Quat::from_rotation_z(angle);
+                                    for turret in turrets.iter() {
+                                        if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                            transform.translation.x = TANK_SIZE+4.0 - 10.0;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -730,11 +834,32 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 active.value = false;
             }
         } else {
+            // for child in children.iter() {
+            //     if let Ok((mut _joint, turrets)) = bearing.get_mut(*child) {
+            //         for turret in turrets.iter() {
+            //             if let Ok(mut transform) = transform_query.get_mut(*turret) {
+            //                 transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+            //             }
+            //         }
+            //     }
+            // }
             for child in children.iter() {
-                if let Ok((mut _joint, turrets)) = bearing.get_mut(*child) {
-                    for turret in turrets.iter() {
-                        if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                            transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
+                //     joint.rotation = Quat::from_rotation_z(angle);
+                //     for turret in turrets.iter() {
+                //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                //         }
+                //     }
+                // }
+                if let Ok(tank_child) = tank_child_query.get_mut(*child) {
+                    for bearing in tank_child.iter() {
+                        if let Ok((_joint, turrets)) = bearings.get_mut(*bearing) {
+                            for turret in turrets.iter() {
+                                if let Ok(mut transform) = transform_query.get_mut(*turret) {
+                                    transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
+                                }
+                            }
                         }
                     }
                 }
@@ -805,6 +930,19 @@ fn hurt_tanks(
                                     sprite.color = Color::hsl(ai_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
+
+                            // for child in children.iter() {
+                            //     if let Ok(tank_child) = tank_child_query.get_mut(*child) {
+                            //         for healthbar in tank_child.iter() {
+                            //             if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
+                            //                 transform.scale.x = ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH;
+                            //                 transform.translation.x -= HEALTHBAR_WIDTH / MAX_HEALTH as f32 / 2.0;
+                            //                 // transform.translation.x = 0.0 - ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH / 2.0;
+                            //                 sprite.color = Color::hsl(ai_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
+                            //             }
+                            //         }
+                            //     }
+                            // }
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
                             ai_killed.score += 1;

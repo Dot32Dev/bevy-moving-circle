@@ -188,10 +188,10 @@ impl TurretBundle {
 
 impl TankBundle<ColorMaterial> {
     pub fn new(
-        colour: Color,
+        // colour: Color,
 
-        mut meshes: &mut ResMut<Assets<Mesh>>,
-        mut materials: &mut ResMut<Assets<ColorMaterial>>,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<ColorMaterial>>,
     ) -> TankBundle<ColorMaterial> {
         // let shape = shapes::RegularPolygon { // Define circle
         //     sides: 30,
@@ -225,7 +225,7 @@ impl TankBundle<ColorMaterial> {
             // ),
             material_bundle: bevy::sprite::MaterialMesh2dBundle {
                 mesh: meshes.add(shape::Circle::new(TANK_SIZE).into()).into(),
-                material: materials.add(ColorMaterial::from(colour)),
+                material: materials.add(ColorMaterial::from(Color::BLACK)),
                 transform: Transform {
                     translation: Vec3::new(0.0, 0.0, 1.0),
                     ..default()
