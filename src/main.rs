@@ -13,12 +13,9 @@ mod tanks;
 use bevy::{
     prelude::*, 
     window::*, 
-    // app::AppExit, // For MacOs Cmd+W to close the window
     sprite::MaterialMesh2dBundle,
-    // core::FixedTimestep
 };
 
-// use bevy_prototype_lyon::prelude::*; // Draw circles with ease
 use std::env; // Detect OS for OS specific keybinds
 use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
@@ -27,7 +24,6 @@ use rand::Rng;
 use tanks::*;
 
 const TIME_STEP: f64 = 1.0 / 120.0; // FPS
-// const TIME_STEP: f64 = 0.1; // FPS
 const MUTE: bool = true;
 
 const BULLET_SIZE: f32 = 6.0; 
@@ -35,22 +31,6 @@ const KNOCKBACK: f32 = 5.0;
 
 fn main() {
     App::new()
-    // .insert_resource(Msaa { samples: 4 })
-    // .insert_resource(WindowDescriptor {
-    //         title: "Tiny Tank (bevy edition)".to_string(),
-    //         width: 800.,
-    //         height: 600.,
-    //         present_mode: PresentMode::Fifo, // Vesync enabled, replace Fifo with Mailbox for no vsync
-    //         ..default()
-    //     })
-    // .add_plugins(DefaultPlugins.set(WindowPlugin {
-    //     primary_window: Some(Window {
-    //         title: "Tiny Tank (Bevy Edition)".into(),
-    //         resolution: WindowResolution::new(800., 600.),
-    //         ..default()
-    //     }),
-    //     ..default()
-    // }))
     .add_plugins(
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -101,25 +81,8 @@ fn setup(
     mut commands: Commands,
     // asset_server: Res<AssetServer>,
 ) {
-    // commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    // commands.spawn_bundle(UiCameraBundle::default());
     commands.spawn(Camera2dBundle::default());
     println!("{}", env::consts::OS); // Prints the current OS.
-    
-    // let gunshot = asset_server.load("ShotsFired.ogg");
-    // commands.insert_resource(GunshotSound(gunshot));
-    // let gunshot_deep = asset_server.load("ShotsFiredDeep.ogg");
-    // commands.insert_resource(GunshotDeepSound(gunshot_deep));
-
-    // let tank_hit = asset_server.load("TankHit.ogg");
-    // commands.insert_resource(TankHitSound(tank_hit));
-    // let tank_hit_deep = asset_server.load("TankHitDeep.ogg");
-    // commands.insert_resource(TankHitDeepSound(tank_hit_deep));
-
-    // let wall_hit = asset_server.load("WallHit.ogg");
-    // commands.insert_resource(WallHitSound(wall_hit));
-    // let wall_hit_deep = asset_server.load("WallHitDeep.ogg");
-    // commands.insert_resource(WallHitDeepSound(wall_hit_deep));
 
     // commands.spawn_bundle(ButtonBundle {
     //     style: Style {
@@ -194,20 +157,6 @@ fn setup(
     // }).insert(KillsText);
     
 }
-// #[derive(Resource)]
-// struct GunshotSound(Handle<AudioSource>);
-// #[derive(Resource)]
-// struct GunshotDeepSound(Handle<AudioSource>);
-
-// #[derive(Resource)]
-// struct TankHitSound(Handle<AudioSource>);
-// #[derive(Resource)]
-// struct TankHitDeepSound(Handle<AudioSource>);
-
-// #[derive(Resource)]
-// struct WallHitSound(Handle<AudioSource>);
-// #[derive(Resource)]
-// struct WallHitDeepSound(Handle<AudioSource>);
 
 #[derive(Component)]
 struct GunShotSound;
@@ -257,10 +206,6 @@ fn create_player(
     .insert(Player)
     .insert(Name::new("Player"))
     .with_children(|parent| {
-        // parent.spawn(BearingBundle::new())
-        // .with_children(|parent| {
-        //     parent.spawn(TurretBundle::new());
-        // });
         parent.spawn(MaterialMesh2dBundle {
             mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
             material: materials.add(Color::rgb(0.35, 0.6, 0.99).into()),
@@ -289,10 +234,6 @@ fn create_enemy(
         .insert(AiBundle::new())
         .insert(Name::new("Enemy"))
         .with_children(|parent| {
-            // parent.spawn(BearingBundle::new())
-            // .with_children(|parent| {
-            //     parent.spawn(TurretBundle::new());
-            // });
             parent.spawn(MaterialMesh2dBundle {
                 mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
                 material: materials.add(Color::rgb(0.89, 0.56, 0.26).into()),
@@ -441,51 +382,11 @@ fn ai_movement(
     }
 }
 
-// fn quit_and_resize(keyboard_input: Res<Input<KeyCode>>,
-//     mut exit: EventWriter<AppExit>,
-//     primary_window: Query<&Window, With<PrimaryWindow>>
-// ) {
-//     let Ok(window) = primary_window.get_single() else {
-//         return;
-//     };
-
-//     if env::consts::OS == "macos" {
-//         if keyboard_input.pressed(KeyCode::LWin) && keyboard_input.just_pressed(KeyCode::W) {
-//             exit.send(AppExit);
-//             window.set_mode(WindowMode::Windowed);
-//         }
-//         if keyboard_input.pressed(KeyCode::LWin) 
-//         && keyboard_input.pressed(KeyCode::LControl) 
-//         && keyboard_input.just_pressed(KeyCode::F) {
-//             println!("{:?}", window.mode());
-//             if window.mode() == WindowMode::Windowed {
-//                 window.set_mode(WindowMode::BorderlessFullscreen);
-//             } else if window.mode() == WindowMode::BorderlessFullscreen {
-//                 window.set_mode(WindowMode::Windowed);
-//             }
-//         }
-//     }
-//     if env::consts::OS == "windows" {
-//         if keyboard_input.just_pressed(KeyCode::F11) {
-//             if window.mode() == WindowMode::Windowed {
-//                 window.set_mode(WindowMode::BorderlessFullscreen);
-//             } else if window.mode() == WindowMode::BorderlessFullscreen {
-//                 window.set_mode(WindowMode::Windowed);
-//             }
-//         }
-//     }
-// }
-
 
 fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     buttons: Res<Input<MouseButton>>, 
     primary_window: Query<&Window, With<PrimaryWindow>>,
     time: Res<Time>,
-    // audio: Res<Audio>,
-    // gunshot: Res<GunshotSound>,
-    // gunshot_deep: Res<GunshotDeepSound>,
-    // gunshot: Query<&AudioSink, With<GunShotSound>>,
-    // gunshot_deep: Query<&AudioSink, With<GunShotDeepSound>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
@@ -512,16 +413,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                     let diff = mouse_coords.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation;
                     let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
 
-                    // for (mut joint, turrets) in bearing.iter_mut() {
                     for child in children.iter() {
-                        // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                        //     joint.rotation = Quat::from_rotation_z(angle);
-                        //     for turret in turrets.iter() {
-                        //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                        //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
-                        //         }
-                        //     }
-                        // }
                         if let Ok(tank_child) = tank_child_query.get_mut(*child) {
                             for bearing in tank_child.iter() {
                                 if let Ok((mut joint, turrets)) = bearings.get_mut(*bearing) {
@@ -538,17 +430,6 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4  && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
                         attack_timer.value = 0.0;
                         if !MUTE {
-                            // audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            // audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            // for sink in gunshot.iter() {
-                            //     // sink.set_volume(0.2);
-                            //     sink.play();
-                            // }
-                            // for sink in gunshot_deep.iter() {
-                            //     // sink.set_volume(0.2);
-                            //     sink.play();
-                            //     println!("played sound");
-                            // }
                             commands.spawn((
                                 AudioBundle {
                                     source: asset_server.load("ShotsFired.ogg"),
@@ -565,24 +446,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             ));
                         }
 
-                        // for child in children.iter() {
-                        //     if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
-                        //         for turret in turrets.iter() {
-                        //             if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                        //                 transform.translation.x = TANK_SIZE+4.0 - 10.0;
-                        //             }
-                        //         }
-                        //     }
-                        // }
                         for child in children.iter() {
-                            // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                            //     joint.rotation = Quat::from_rotation_z(angle);
-                            //     for turret in turrets.iter() {
-                            //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                            //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
-                            //         }
-                            //     }
-                            // }
                             if let Ok(tank_child) = tank_child_query.get_mut(*child) {
                                 for bearing in tank_child.iter() {
                                     if let Ok((mut joint, turrets)) = bearings.get_mut(*bearing) {
@@ -597,25 +461,6 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             }
                         }
 
-                        // println!("x{}, y{}", vec.x, vec.y);
-                        // let shape = shapes::RegularPolygon {
-                        //     sides: 30,
-                        //     feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
-                        //     ..shapes::RegularPolygon::default()
-                        // };
-                        // commands.spawn(GeometryBuilder::build_as(
-                        //     &shape,
-                        //     DrawMode::Fill (
-                        //         FillMode::color(Color::BLACK),
-                        //     ),
-                        //     Transform {
-                        //         translation: Vec3::new(player.translation.x, player.translation.y, 0.0),
-                        //         ..default()
-                        //     },
-                        // )).insert(Bullet {from: TurretOf::Player} )
-                        // // .insert(Direction { dir: Vec2::new(vec.x - player.translation.x - window.width()/2.0, vec.y - player.translation.y - window.height()/2.0).normalize() });
-                        // .insert(Name::new("Bullet"))
-                        // .insert(Direction{dir:(vec - player.translation.truncate() - window_size/2.0).normalize()});
                         commands.spawn((
                             MaterialMesh2dBundle {
                                 mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
@@ -627,8 +472,6 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                             Bullet {from: TurretOf::Player},
                             Direction{dir:(mouse_coords - player.translation.truncate() - window_size/2.0).normalize()},
                         ));
-                        // print mouse coorindates (vec)
-                        // println!("thing {}", mouse_coords.extend(0.0) - window_size.extend(0.0)/2.0 - player.translation);
                     }
 
                     attack_timer.value += time.delta_seconds()
@@ -642,11 +485,6 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
 fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     time: Res<Time>,
-    // audio: Res<Audio>,
-    // gunshot: Res<GunshotSound>,
-    // gunshot_deep: Res<GunshotDeepSound>,
-    // gunshot: Query<&AudioSink, With<GunShotSound>>,
-    // gunshot_deep: Query<&AudioSink, With<GunShotDeepSound>>,
     asset_server: Res<AssetServer>,
     players: Query<&Transform, (Without<Ai>, With<Player>)>,
     mut commands: Commands,
@@ -667,26 +505,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 // let diff = vec.extend(0.0) - window_size.extend(0.0)/2.0 - ai.translation;
                 let angle = diff.y.atan2(diff.x); // Add/sub FRAC_PI here optionally
                 // ai.rotation = Quat::from_rotation_z(angle);
-
-                // for child in children.iter() {
-                //     if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                //         joint.rotation = Quat::from_rotation_z(angle);
-                //         for turret in turrets.iter() {
-                //             if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                //                 transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
-                //             }
-                //         }
-                //     }
-                // }
                 for child in children.iter() {
-                    // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                    //     joint.rotation = Quat::from_rotation_z(angle);
-                    //     for turret in turrets.iter() {
-                    //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                    //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
-                    //         }
-                    //     }
-                    // }
                     if let Ok(tank_child) = tank_child_query.get_mut(*child) {
                         for bearing in tank_child.iter() {
                             if let Ok((mut joint, turrets)) = bearings.get_mut(*bearing) {
@@ -704,17 +523,6 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 {
                     attack_timer.value =rand::thread_rng().gen_range(5 ..= 14) as f32 /10.0 ;
                     if !MUTE {
-                        // audio.play_with_settings(gunshot.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                        // audio.play_with_settings(gunshot_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                        // for sink in gunshot.iter() {
-                        //     // sink.set_volume(0.2);
-                        //     sink.play();
-                        // }
-                        // for sink in gunshot_deep.iter() {
-                        //     // sink.set_volume(0.2);
-                        //     sink.play();
-                        //     println!("played sound");
-                        // }
                         commands.spawn((
                             AudioBundle {
                                 source: asset_server.load("ShotsFired.ogg"),
@@ -730,25 +538,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                             GunShotDeepSound,
                         ));
                     }
-
-                    // for child in children.iter() {
-                    //     if let Ok((_joint, turrets)) = bearing.get_mut(*child) {
-                    //         for turret in turrets.iter() {
-                    //             if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                    //                 transform.translation.x = TANK_SIZE+4.0 - 10.0;
-                    //             }
-                    //         }
-                    //     }
-                    // }
                     for child in children.iter() {
-                        // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                        //     joint.rotation = Quat::from_rotation_z(angle);
-                        //     for turret in turrets.iter() {
-                        //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                        //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
-                        //         }
-                        //     }
-                        // }
                         if let Ok(tank_child) = tank_child_query.get_mut(*child) {
                             for bearing in tank_child.iter() {
                                 if let Ok((mut joint, turrets)) = bearings.get_mut(*bearing) {
@@ -762,26 +552,6 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                             }
                         }
                     }
-
-                    // println!("x{}, y{}", player.translation.x, player.translation.y);
-                    // let shape = shapes::RegularPolygon {
-                    //     sides: 30,
-                    //     feature: shapes::RegularPolygonFeature::Radius(BULLET_SIZE),
-                    //     ..shapes::RegularPolygon::default()
-                    // };
-                    // commands.spawn(GeometryBuilder::build_as(
-                    //     &shape,
-                    //     DrawMode::Fill (
-                    //         FillMode::color(Color::BLACK),
-                    //     ),
-                    //     Transform {
-                    //         translation: Vec3::new(ai.translation.x, ai.translation.y, 0.0),
-                    //         ..default()
-                    //     },
-                    // )).insert(Bullet {from: TurretOf::Ai} )
-                    // // .insert(Direction { dir: Vec2::new(vec.x - ai.translation.x - window.width()/2.0, vec.y - ai.translation.y - window.height()/2.0).normalize() });
-                    // .insert(Name::new("Bullet"))
-                    // .insert(Direction{dir:(player.translation.truncate() - ai.translation.truncate()).normalize()});
                     commands.spawn((
                         MaterialMesh2dBundle {
                             mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
@@ -804,24 +574,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 active.value = false;
             }
         } else {
-            // for child in children.iter() {
-            //     if let Ok((mut _joint, turrets)) = bearing.get_mut(*child) {
-            //         for turret in turrets.iter() {
-            //             if let Ok(mut transform) = transform_query.get_mut(*turret) {
-            //                 transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
-            //             }
-            //         }
-            //     }
-            // }
             for child in children.iter() {
-                // if let Ok((mut joint, turrets)) = bearing.get_mut(*child) {
-                //     joint.rotation = Quat::from_rotation_z(angle);
-                //     for turret in turrets.iter() {
-                //         if let Ok(mut transform) = transform_query.get_mut(*turret) {
-                //             transform.translation.x += ((TANK_SIZE+4.0)-transform.translation.x)*0.1;
-                //         }
-                //     }
-                // }
                 if let Ok(tank_child) = tank_child_query.get_mut(*child) {
                     for bearing in tank_child.iter() {
                         if let Ok((_joint, turrets)) = bearings.get_mut(*bearing) {
@@ -861,19 +614,10 @@ fn keep_healthbars_on_screen(
         let ceiling = window.height()/2.0 - 18.0/2.0;
         let player_height = global_transform.translation().y - transform.translation.y;
         transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
-
-        // let ceiling = window.width()/2.0 - 18.0/2.0;
-        // let player_x = global_transform.translation.x - transform.translation.x;
-        // transform.translation.x = (ceiling - player_x).min(0.0);
     }
 }
 
 fn hurt_tanks(
-    // audio: Res<Audio>,
-    // tank_hit: Res<TankHitSound>,
-    // tank_hit_deep: Res<TankHitDeepSound>,
-    // tank_hit: Query<&AudioSink, With<TankHitSound>>,
-    // tank_hit_deep: Query<&AudioSink, With<TankHitDeepSound>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
@@ -900,36 +644,12 @@ fn hurt_tanks(
                                     sprite.color = Color::hsl(ai_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
-
-                            // for child in children.iter() {
-                            //     if let Ok(tank_child) = tank_child_query.get_mut(*child) {
-                            //         for healthbar in tank_child.iter() {
-                            //             if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
-                            //                 transform.scale.x = ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH;
-                            //                 transform.translation.x -= HEALTHBAR_WIDTH / MAX_HEALTH as f32 / 2.0;
-                            //                 // transform.translation.x = 0.0 - ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH / 2.0;
-                            //                 sprite.color = Color::hsl(ai_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
-                            //             }
-                            //         }
-                            //     }
-                            // }
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
                             ai_killed.score += 1;
                         }
                         commands.entity(bullet_entity).despawn(); 
                         if !MUTE {
-                            // audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            // audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
-                            // for sink in tank_hit.iter() {
-                            //     // sink.set_volume(0.2);
-                            //     sink.play();
-                            // }
-                            // for sink in tank_hit_deep.iter() {
-                            //     // sink.set_volume(0.1);
-                            //     sink.play();
-                            //     println!("played sound");
-                            // }
                             commands.spawn((
                                 AudioBundle {
                                     source: asset_server.load("TankHit.ogg"),
@@ -969,17 +689,6 @@ fn hurt_tanks(
                         }
                         commands.entity(bullet_entity).despawn(); 
                         if !MUTE {
-                            // audio.play_with_settings(tank_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                            // audio.play_with_settings(tank_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.1));
-                            // for sink in tank_hit.iter() {
-                            //     // sink.set_volume(0.2);
-                            //     sink.play();
-                            // }
-                            // for sink in tank_hit_deep.iter() {
-                            //     // sink.set_volume(0.1);
-                            //     sink.play();
-                            //     println!("played sound");
-                            // }
                             commands.spawn((
                                 AudioBundle {
                                     source: asset_server.load("TankHit.ogg"),
@@ -1010,11 +719,6 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
 }
 
 fn kill_bullets(
-    // audio: Res<Audio>,
-    // wall_hit: Res<WallHitSound>,
-    // wall_hit_deep: Res<WallHitDeepSound>,
-    // wall_hit: Query<&AudioSink, With<WallHitSound>>,
-    // wall_hit_deep: Query<&AudioSink, With<WallHitDeepSound>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,
@@ -1029,17 +733,6 @@ fn kill_bullets(
         if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
             commands.entity(bullet_entity).despawn(); 
             if !MUTE {
-                // audio.play_with_settings(wall_hit.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                // audio.play_with_settings(wall_hit_deep.0.clone(), PlaybackSettings::ONCE.with_volume(0.2));
-                // for sink in wall_hit.iter() {
-                //     // sink.set_volume(0.2);
-                //     sink.play();
-                // }
-                // for sink in wall_hit_deep.iter() {
-                //     // sink.set_volume(0.2);
-                //     sink.play();
-                //     println!("played sound");
-                // }
                 commands.spawn((
                     AudioBundle {
                         source: asset_server.load("WallHit.ogg"),
