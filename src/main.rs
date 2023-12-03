@@ -27,7 +27,8 @@ use rand::Rng;
 use tanks::*;
 
 const TIME_STEP: f64 = 1.0 / 120.0; // FPS
-const MUTE: bool = false;
+// const TIME_STEP: f64 = 0.1; // FPS
+const MUTE: bool = true;
 
 const BULLET_SIZE: f32 = 6.0; 
 const KNOCKBACK: f32 = 5.0;
@@ -55,6 +56,7 @@ fn main() {
             primary_window: Some(Window {
                 title: "Tiny Tank (Bevy Edition)".into(),
                 resolution: WindowResolution::new(800., 600.),
+                present_mode: PresentMode::Fifo,
                 ..default()
             }),
             ..default()
@@ -73,29 +75,7 @@ fn main() {
         create_enemy,
         setup,
     ))
-    // .add_plugins_with(DefaultPlugins, |group| {
-    //     group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
-    // })
-    // .add_plugin(EmbeddedAssetPlugin.before(EmbeddedAssetPlugin))
-
-    // .add_plugin(WorldInspectorPlugin::new())
-    // .register_inspectable::<Health>() // tells bevy-inspector-egui how to display the struct in the world inspector
-    // .insert_resource(WorldInspectorParams {
-    //     enabled: false,
-    //     ..Default::default()
-    // })
-    // .add_system(toggle_inspector)
-    // .add_plugin(ShapePlugin)
-    // .add_system(quit_and_resize)
-    // .add_system(mouse_button_input)
-    // .add_system(ai_rotate)
-    // .add_system(keep_tanks_on_screen)
-    // .add_system(keep_healthbars_on_screen)
-    // .add_system(kill_bullets)
-    // // .add_system(button_system)
-    // .add_system(hurt_tanks)
-    // .add_system(collide_tanks)
-    // .add_system(update_kills_text)
+    
     .add_systems(Update, (
         mouse_button_input,
         ai_rotate,
@@ -106,25 +86,14 @@ fn main() {
         collide_tanks,
         update_kills_text,
     ))
-    // .add_system_set(
-    //     SystemSet::new()
-    //     .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
-    //     .with_system(update_bullets)
-    //     .with_system(movement)
-    //     .with_system(ai_movement)
-    // )
-    // .add_system(update_bullets)
-    // .add_system(movement)
-    // .add_system(ai_movement)
-    .insert_resource(Time::<Fixed>::from_seconds(TIME_STEP))
+
     .add_systems(FixedUpdate, (
         update_bullets,
         movement,
         ai_movement,
     ))
-    // 
-    // .add_plugin(Intro)
     .add_plugins(Intro)
+    .insert_resource(Time::<Fixed>::from_seconds(TIME_STEP))
     .run();
 }
 
