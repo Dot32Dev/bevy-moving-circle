@@ -42,14 +42,10 @@ fn main() {
             ..default()
         })
         .build()
-        // .add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin),
     )
     .add_plugins(EmbeddedAssetPlugin::default())
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .insert_resource(AiKilled { score: 0})
-    // .add_startup_system(create_player)
-    // .add_startup_system(create_enemy)
-    // .add_startup_system(setup)
     .add_systems(Startup, (
         create_player,
         create_enemy,
@@ -72,8 +68,8 @@ fn main() {
         movement,
         ai_movement,
     ))
-    .add_plugins(Intro)
     .insert_resource(Time::<Fixed>::from_seconds(TIME_STEP))
+    .add_plugins(Intro)
     .run();
 }
 
