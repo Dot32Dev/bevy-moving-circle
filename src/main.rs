@@ -23,7 +23,7 @@ use rand::Rng;
 // use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
 use tanks::*;
 
-const TIME_STEP: f64 = 1.0 / 120.0; // FPS
+const TIME_STEP: f64 = 1.0 / 60.0; // FPS
 const MUTE: bool = true;
 
 const BULLET_SIZE: f32 = 6.0; 

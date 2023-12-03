@@ -2,7 +2,7 @@ use bevy::prelude::*;
 // use bevy_prototype_lyon::prelude::*; // Draw circles with ease
 // use bevy_inspector_egui::Inspectable;
 
-pub const TANK_SPEED: f32 = 0.37;
+pub const TANK_SPEED: f32 = 2.0/3.0;
 pub const TANK_SIZE: f32 = 20.0; 
 
 pub const HEALTHBAR_WIDTH: f32 = 50.0;
