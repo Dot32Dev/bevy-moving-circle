@@ -26,7 +26,7 @@ use rand::Rng;
 // use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
 use tanks::*;
 
-const TIME_STEP: f32 = 1.0 / 120.0; // FPS
+const TIME_STEP: f64 = 1.0 / 120.0; // FPS
 const MUTE: bool = false;
 
 const BULLET_SIZE: f32 = 6.0; 
@@ -60,8 +60,9 @@ fn main() {
             ..default()
         })
         .build()
-        .add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin),
+        // .add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin),
     )
+    .add_plugins(EmbeddedAssetPlugin::default())
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .insert_resource(AiKilled { score: 0})
     // .add_startup_system(create_player)
@@ -115,7 +116,7 @@ fn main() {
     // .add_system(update_bullets)
     // .add_system(movement)
     // .add_system(ai_movement)
-    .insert_resource(FixedTime::new_from_secs(TIME_STEP))
+    .insert_resource(Time::<Fixed>::from_seconds(TIME_STEP))
     .add_systems(FixedUpdate, (
         update_bullets,
         movement,

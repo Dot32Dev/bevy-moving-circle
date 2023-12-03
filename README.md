@@ -1,5 +1,3 @@
-> This project is currently undergoing a migration from Bevy 0.7 to Bevy 0.11. Much will be broken during this time.
-
 # bevy-moving-circle
 A yellow circle player controlled with arrow keys/WASD
 
