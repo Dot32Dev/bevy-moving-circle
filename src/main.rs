@@ -8,12 +8,11 @@
 // TODO: Add k/d ratio at the top of the screen
 // TODO: Rounded corners UI
 
-mod tanks;
-
 use bevy::{
     prelude::*, 
     window::*, 
     sprite::MaterialMesh2dBundle,
+    ecs::system::RunSystemOnce,
 };
 
 use std::env; // Detect OS for OS specific keybinds
@@ -21,10 +20,14 @@ use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
 // use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
+mod tanks;
 use tanks::*;
 
+mod sound;
+use sound::*;
+
 const TIME_STEP: f64 = 1.0 / 60.0; // FPS
-const MUTE: bool = true;
+const MUTE: bool = false;
 
 const BULLET_SIZE: f32 = 6.0; 
 const KNOCKBACK: f32 = 5.0;
@@ -46,11 +49,18 @@ fn main() {
     .add_plugins(EmbeddedAssetPlugin::default())
     .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
     .insert_resource(AiKilled { score: 0})
+
     .add_systems(Startup, (
         create_player,
         create_enemy,
         setup,
     ))
+
+    // .add_systems(PostUpdate, (
+    //     play_gunshot,
+    //     play_tankhit,
+    //     play_wallhit,
+    // ))
     
     .add_systems(Update, (
         mouse_button_input,
@@ -69,6 +79,7 @@ fn main() {
         ai_movement,
     ))
     .insert_resource(Time::<Fixed>::from_seconds(TIME_STEP))
+
     .add_plugins(Intro)
     .run();
 }
@@ -153,21 +164,6 @@ fn setup(
     // }).insert(KillsText);
     
 }
-
-#[derive(Component)]
-struct GunShotSound;
-#[derive(Component)]
-struct GunShotDeepSound;
-
-#[derive(Component)]
-struct TankHitSound;
-#[derive(Component)]
-struct TankHitDeepSound;
-
-#[derive(Component)]
-struct WallHitSound;
-#[derive(Component)]
-struct WallHitDeepSound;
 
 enum TurretOf {
 	Player,
@@ -383,8 +379,9 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
     buttons: Res<Input<MouseButton>>, 
     primary_window: Query<&Window, With<PrimaryWindow>>,
     time: Res<Time>,
-    asset_server: Res<AssetServer>,
+    
     mut commands: Commands,
+    // world: &mut World,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children), With<Player>>,
     mut tank_child_query: Query<&Children, (Without<Player>, Without<Turret>, Without<Bearing>)>,
     mut bearings: Query<(&mut Transform, &Children), (With<Bearing>, Without<Player>, Without<Turret>)>,
@@ -426,20 +423,10 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
                     if buttons.pressed(MouseButton::Left) && attack_timer.value > 0.4  && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
                         attack_timer.value = 0.0;
                         if !MUTE {
-                            commands.spawn((
-                                AudioBundle {
-                                    source: asset_server.load("ShotsFired.ogg"),
-                                    settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                                },
-                                GunShotSound,
-                            ));
-                            commands.spawn((
-                                AudioBundle {
-                                    source: asset_server.load("ShotsFiredDeep.ogg"),
-                                    settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                                },
-                                GunShotDeepSound,
-                            ));
+                            // Goofy ahh work around to world being exclusive
+                            commands.add( |world: &mut World| {
+                                world.run_system_once(play_gunshot)
+                            })
                         }
 
                         for child in children.iter() {
@@ -481,7 +468,6 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
 fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
     time: Res<Time>,
-    asset_server: Res<AssetServer>,
     players: Query<&Transform, (Without<Ai>, With<Player>)>,
     mut commands: Commands,
     mut positions: Query<(&mut Transform, &mut AttackTimer, &Children, &mut Active), With<Ai>>,
@@ -519,20 +505,10 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                 if attack_timer.value < 0.0 && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32 {
                     attack_timer.value =rand::thread_rng().gen_range(5 ..= 14) as f32 /10.0 ;
                     if !MUTE {
-                        commands.spawn((
-                            AudioBundle {
-                                source: asset_server.load("ShotsFired.ogg"),
-                                settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                            },
-                            GunShotSound,
-                        ));
-                        commands.spawn((
-                            AudioBundle {
-                                source: asset_server.load("ShotsFiredDeep.ogg"),
-                                settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                            },
-                            GunShotDeepSound,
-                        ));
+                        // Goofy ahh work around to world being exclusive
+                        commands.add( |world: &mut World| {
+                            world.run_system_once(play_gunshot)
+                        })
                     }
                     for child in children.iter() {
                         if let Ok(tank_child) = tank_child_query.get_mut(*child) {
@@ -614,7 +590,6 @@ fn keep_healthbars_on_screen(
 }
 
 fn hurt_tanks(
-    asset_server: Res<AssetServer>,
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
     mut ais: Query<(&Transform, Entity, &mut Health, &Children, &mut Velocity), (Without<Player>, With<Ai>, Without<Bullet>)>,
@@ -646,20 +621,10 @@ fn hurt_tanks(
                         }
                         commands.entity(bullet_entity).despawn(); 
                         if !MUTE {
-                            commands.spawn((
-                                AudioBundle {
-                                    source: asset_server.load("TankHit.ogg"),
-                                    settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                                },
-                                TankHitSound,
-                            ));
-                            commands.spawn((
-                                AudioBundle {
-                                    source: asset_server.load("TankHitDeep.ogg"),
-                                    settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                                },
-                                TankHitDeepSound,
-                            ));
+                            // Goofy ahh work around to world being exclusive
+                            commands.add( |world: &mut World| {
+                                world.run_system_once(play_tankhit)
+                            })
                         }
                     }
                 }
@@ -685,20 +650,10 @@ fn hurt_tanks(
                         }
                         commands.entity(bullet_entity).despawn(); 
                         if !MUTE {
-                            commands.spawn((
-                                AudioBundle {
-                                    source: asset_server.load("TankHit.ogg"),
-                                    settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                                },
-                                TankHitSound,
-                            ));
-                            commands.spawn((
-                                AudioBundle {
-                                    source: asset_server.load("TankHitDeep.ogg"),
-                                    settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                                },
-                                TankHitDeepSound,
-                            ));
+                            // Goofy ahh work around to world being exclusive
+                            commands.add( |world: &mut World| {
+                                world.run_system_once(play_tankhit)
+                            })
                         }
                     }
                 }
@@ -715,7 +670,6 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
 }
 
 fn kill_bullets(
-    asset_server: Res<AssetServer>,
     mut commands: Commands,
     mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,
     primary_window: Query<&Window, With<PrimaryWindow>>,
@@ -729,20 +683,10 @@ fn kill_bullets(
         if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
             commands.entity(bullet_entity).despawn(); 
             if !MUTE {
-                commands.spawn((
-                    AudioBundle {
-                        source: asset_server.load("WallHit.ogg"),
-                        settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                    },
-                    WallHitSound,
-                ));
-                commands.spawn((
-                    AudioBundle {
-                        source: asset_server.load("WallHitDeep.ogg"),
-                        settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
-                    },
-                    WallHitDeepSound,
-                ));
+                // Goofy ahh work around to world being exclusive
+                commands.add( |world: &mut World| {
+                    world.run_system_once(play_wallhit)
+                })
             }
         }
     }
