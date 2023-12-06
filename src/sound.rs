@@ -36,14 +36,14 @@ pub fn play_gunshot(
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("ShotsFired.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.5))
 		},
 		GunShotSound,
 	));
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("ShotsFiredDeep.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.25))
 		},
 		GunShotDeepSound,
 	));
@@ -70,14 +70,14 @@ pub fn play_tankhit(
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("TankHit.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.5))
 		},
 		TankHitSound,
 	));
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("TankHitDeep.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.25))
 		},
 		TankHitDeepSound,
 	));
@@ -104,14 +104,14 @@ pub fn play_wallhit(
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("WallHit.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.25))
 		},
 		WallHitSound,
 	));
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("WallHitDeep.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.2))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.125))
 		},
 		WallHitDeepSound,
 	));
