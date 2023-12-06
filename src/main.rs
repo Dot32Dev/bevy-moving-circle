@@ -20,11 +20,16 @@ use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
 // use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
+
 mod tanks;
 use tanks::*;
 
 mod sound;
 use sound::*;
+
+mod healthbars;
+use healthbars::*;
+pub const MAX_HEALTH: u8 = 5;
 
 const TIME_STEP: f64 = 1.0 / 60.0; // FPS
 const MUTE: bool = false;
@@ -194,7 +199,7 @@ fn create_player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(TankBundle::new(&mut meshes, &mut materials))
+    commands.spawn(TankBundle::new(&mut meshes, &mut materials, 5)) // "5" is the amount of health we spawn the tank with
     .insert(Player)
     .insert(Name::new("Player"))
     .with_children(|parent| {
@@ -210,7 +215,7 @@ fn create_player(
                 parent.spawn(TurretBundle::new());
             });
         });
-        parent.spawn(HealthbarBundle::new());
+        parent.spawn(HealthbarBundle::new(5)); // "5" is the max health 
         parent.spawn(HealthbarBorderBundle::new());
     });
 }
@@ -222,7 +227,7 @@ fn create_enemy(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for _ in 0..2 {
-        commands.spawn(TankBundle::new(&mut meshes, &mut materials))
+        commands.spawn(TankBundle::new(&mut meshes, &mut materials, 5)) // "5" is the amount of health we spawn the tank with
         .insert(AiBundle::new())
         .insert(Name::new("Enemy"))
         .with_children(|parent| {
@@ -238,7 +243,7 @@ fn create_enemy(
                     parent.spawn(TurretBundle::new());
                 });
             });
-            parent.spawn(HealthbarBundle::new());
+            parent.spawn(HealthbarBundle::new(5)); // "5" is the max health
             parent.spawn(HealthbarBorderBundle::new());
         });
     }
@@ -594,7 +599,7 @@ fn hurt_tanks(
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
     mut ais: Query<(&Transform, Entity, &mut Health, &Children, &mut Velocity), (Without<Player>, With<Ai>, Without<Bullet>)>,
     mut players: Query<(&mut Transform, Entity, &mut Health, &Children, &mut Velocity), (With<Player>, Without<Ai>, Without<Bullet>)>,
-    mut healthbar_query: Query<(&mut Transform, &mut Sprite), (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
+    mut healthbar_query: Query<(&mut Transform, &mut Sprite, &MaxHealth), (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
     mut ai_killed: ResMut<AiKilled>, 
 ) {
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
@@ -608,11 +613,11 @@ fn hurt_tanks(
                         if ai_health.value > 1 {
                             ai_health.value -= 1;
                             for healthbar in children.iter() {
-                                if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
-                                    transform.scale.x = ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH;
-                                    transform.translation.x -= HEALTHBAR_WIDTH / MAX_HEALTH as f32 / 2.0;
-                                    // transform.translation.x = 0.0 - ai_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH / 2.0;
-                                    sprite.color = Color::hsl(ai_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
+                                if let Ok((mut transform, mut sprite, max_health)) = healthbar_query.get_mut(*healthbar) {
+                                    transform.scale.x = ai_health.value as f32 / max_health.0 as f32 * HEALTHBAR_WIDTH;
+                                    transform.translation.x -= HEALTHBAR_WIDTH / max_health.0 as f32 / 2.0;
+                                    // transform.translation.x = 0.0 - ai_health.value as f32 / max_health.0 as f32 * HEALTHBAR_WIDTH / 2.0;
+                                    sprite.color = Color::hsl(ai_health.value as f32 / max_health.0 as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
                         } else {
@@ -638,10 +643,10 @@ fn hurt_tanks(
                         if player_health.value > 1 {
                             player_health.value -= 1;
                             for healthbar in children.iter() {
-                                if let Ok((mut transform, mut sprite)) = healthbar_query.get_mut(*healthbar) {
-                                    transform.scale.x = player_health.value as f32 / MAX_HEALTH as f32 * HEALTHBAR_WIDTH;
-                                    transform.translation.x -= HEALTHBAR_WIDTH / MAX_HEALTH as f32 / 2.0;
-                                    sprite.color = Color::hsl(player_health.value as f32 / MAX_HEALTH as f32 * 150.0, 0.98, 0.58);
+                                if let Ok((mut transform, mut sprite, max_health)) = healthbar_query.get_mut(*healthbar) {
+                                    transform.scale.x = player_health.value as f32 / max_health.0 as f32 * HEALTHBAR_WIDTH;
+                                    transform.translation.x -= HEALTHBAR_WIDTH / max_health.0 as f32 / 2.0;
+                                    sprite.color = Color::hsl(player_health.value as f32 / max_health.0 as f32 * 150.0, 0.98, 0.58);
                                 }
                             }
                         } else {

@@ -7,10 +7,6 @@ pub const TANK_SPEED: f32 = 2.0/3.0;
 pub const TANK_SIZE: f32 = 20.0; 
 const TURRET_SIZE: f32 = 16.0;
 
-pub const HEALTHBAR_WIDTH: f32 = 50.0;
-pub const MAX_HEALTH: u8 = 5;
-pub const HEALTHBAR_Y_OFFSET: f32 = 40.0;
-
 #[derive(Component)]
 pub struct Tank;
 
@@ -62,12 +58,6 @@ pub struct Turret;
 #[derive(Component)]
 pub struct Bearing;
 
-#[derive(Component)]
-pub struct Healthbar;
-
-#[derive(Component)]
-pub struct HealthbarBorder;
-
 // Defines a Tank Bundle that can spawn a tank in a single commands.spawn(TankBundle{ ... })
 #[derive(Bundle)]
 pub struct TankBundle<M: bevy::sprite::Material2d> {
@@ -85,62 +75,6 @@ pub struct AiBundle {
     active: Active,
     steps: Steps,
     direction_ai: DirectionAi,
-}
-
-#[derive(Bundle)]
-pub struct HealthbarBundle {
-    sprite_bundle: SpriteBundle, // Sprite Bundle gives the healthbar its "rectangle"
-    healthbar: Healthbar,
-}
-
-impl HealthbarBundle {
-    // This creates a new default healthbar
-    // Usefull because we can just do commands.spawn(HealthbarBundle.new())
-    pub fn new() -> HealthbarBundle {
-        HealthbarBundle {
-            sprite_bundle: SpriteBundle {
-                sprite: Sprite {
-                    color: Color::hsl(150.0, 0.98, 0.58),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
-                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
-                    ..default()
-                },
-                ..default()
-            },
-            healthbar: Healthbar,
-        }
-    }
-}
-
-// For the background/border of the healthbar
-#[derive(Bundle)]
-pub struct HealthbarBorderBundle {
-    sprite_bundle: SpriteBundle,
-    healthbar_border: HealthbarBorder,
-}
-
-impl HealthbarBorderBundle {
-    // Creates a default healthbar border
-    pub fn new() -> HealthbarBorderBundle {
-        HealthbarBorderBundle {
-            sprite_bundle: SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgba(0., 0., 0., 0.5),
-                    ..default()
-                },
-                transform: Transform {
-                    scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
-                    translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
-                    ..default()
-                },
-                ..default()
-            },
-            healthbar_border: HealthbarBorder,
-        }
-    }
 }
 
 #[derive(Bundle)]
@@ -202,6 +136,7 @@ impl TankBundle<ColorMaterial> {
     pub fn new(
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<ColorMaterial>>,
+        health: u8,
     ) -> TankBundle<ColorMaterial> {
         TankBundle {
             material_bundle: bevy::sprite::MaterialMesh2dBundle {
@@ -218,7 +153,7 @@ impl TankBundle<ColorMaterial> {
                 value: 0.0,
             },
             health: Health {
-                value: MAX_HEALTH,
+                value: health,
             },
             velocity: Velocity {
                 value: Vec2::new(0.0, 0.0),
