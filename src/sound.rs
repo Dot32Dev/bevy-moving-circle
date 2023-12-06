@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+// Each sound has two parts, a higher and a lower version. Both are played in unison.
+
 #[derive(Component)]
 pub struct GunShotSound;
 #[derive(Component)]
@@ -15,20 +17,21 @@ pub struct WallHitSound;
 #[derive(Component)]
 pub struct WallHitDeepSound;
 
+// A "one shot system" that will play a gunshot sound
 pub fn play_gunshot(
-	// Used to spawn new sounds
+	// Required to spawn new sounds
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
-	// Used to delete previous sounds
-	mid: Query<(Entity, With<GunShotSound>)>,
-	deep: Query<(Entity, With<GunShotDeepSound>)>,
+	// Required to delete previous sounds
+	higher: Query<(Entity, With<GunShotSound>)>,
+	lower: Query<(Entity, With<GunShotDeepSound>)>,
 ) {
 	// Even though sounds automatically get despawned after their completion, multiple of the same sound playing
 	// at the same time can corrupt the sound. We therefore delete any previously played (but unfinished) sounds.
-	for (entity, _sound) in mid.iter() {
+	for (entity, _sound) in higher.iter() {
 		commands.entity(entity).despawn();
 	}
-	for (entity, _sound) in deep.iter() {
+	for (entity, _sound) in lower.iter() {
 		commands.entity(entity).despawn();
 	}
 
@@ -50,19 +53,19 @@ pub fn play_gunshot(
 }
 
 pub fn play_tankhit(
-	// Used to spawn new sounds
+	// Required to spawn new sounds
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
-	// Used to delete previous sounds
-	mid: Query<(Entity, With<TankHitSound>)>,
-	deep: Query<(Entity, With<TankHitDeepSound>)>,
+	// Required to delete previous sounds
+	higher: Query<(Entity, With<TankHitSound>)>,
+	lower: Query<(Entity, With<TankHitDeepSound>)>,
 ) {
 	// Even though sounds automatically get despawned after their completion, multiple of the same sound playing
 	// at the same time can corrupt the sound. We therefore delete any previously played (but unfinished) sounds.
-	for (entity, _sound) in mid.iter() {
+	for (entity, _sound) in higher.iter() {
 		commands.entity(entity).despawn();
 	}
-	for (entity, _sound) in deep.iter() {
+	for (entity, _sound) in lower.iter() {
 		commands.entity(entity).despawn();
 	}
 
@@ -84,19 +87,19 @@ pub fn play_tankhit(
 }
 
 pub fn play_wallhit(
-	// Used to spawn new sounds
+	// Required to spawn new sounds
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
-	// Used to delete previous sounds
-	mid: Query<(Entity, With<WallHitSound>)>,
-	deep: Query<(Entity, With<WallHitDeepSound>)>,
+	// Required to delete previous sounds
+	higher: Query<(Entity, With<WallHitSound>)>,
+	lower: Query<(Entity, With<WallHitDeepSound>)>,
 ) {
 	// Even though sounds automatically get despawned after their completion, multiple of the same sound playing
 	// at the same time can corrupt the sound. We therefore delete any previously played (but unfinished) sounds.
-	for (entity, _sound) in mid.iter() {
+	for (entity, _sound) in higher.iter() {
 		commands.entity(entity).despawn();
 	}
-	for (entity, _sound) in deep.iter() {
+	for (entity, _sound) in lower.iter() {
 		commands.entity(entity).despawn();
 	}
 
