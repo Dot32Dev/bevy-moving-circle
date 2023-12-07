@@ -15,6 +15,14 @@ pub struct Healthbar;
 #[derive(Component)]
 pub struct HealthbarBorder;
 
+pub enum Side {
+	Right,
+    Left
+}
+
+#[derive(Component)]
+pub struct HealthbarSide(pub Side);
+
 #[derive(Component)]
 pub struct MaxHealth(pub u8);
 
@@ -62,6 +70,30 @@ pub fn update_healthbar_border(
                     sprite.color = Color::hsl(health_percentage * 150.0, 0.73, 0.48);
                 }
             }
+		}
+    }
+}
+
+// Update the side-circles of the healthbar/healthbarborder
+pub fn update_healthbar_sides(
+    mut materials: ResMut<Assets<ColorMaterial>>,
+	bars: Query<(&Transform, &Sprite), Without<HealthbarSide>>,
+	mut sides: Query<(&mut Transform, &mut Handle<ColorMaterial>, &Parent, &HealthbarSide)>
+) {
+    for (mut transform, mut material_handle, parent, side) in sides.iter_mut() {
+		// We have the side circle's components
+		if let Ok((parent_transform, parent_sprite)) = bars.get(parent.get()) {
+			// We now have the transform and sprite of the side circle's parent
+            // We make the circle just as wide as it is high
+            transform.scale.x = parent_transform.scale.y / parent_transform.scale.x;
+            // We move the circle to the left or the right of its parent
+            match side.0 {
+                Side::Right => transform.translation.x = 0.5,
+                Side::Left => transform.translation.x = -0.5,
+            }
+            // We update the circle's colour
+            let mut material = materials.get_mut(material_handle.id()).unwrap();
+            material.color = parent_sprite.color;
 		}
     }
 }
@@ -114,7 +146,7 @@ impl HealthbarBorderBundle {
                 },
                 transform: Transform {
                     scale: Vec3::new(
-						HEALTHBAR_WIDTH  + HEALTHBAR_BORDER_THICKNESS * 2.0, 
+						HEALTHBAR_WIDTH, 
 						HEALTHBAR_HEIGHT + HEALTHBAR_BORDER_THICKNESS * 2.0, 
 						0.0,
 					),
