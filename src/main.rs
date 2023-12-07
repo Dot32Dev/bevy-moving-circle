@@ -595,15 +595,14 @@ fn keep_healthbars_on_screen(
 fn hurt_tanks(
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
-    mut ais: Query<(&Transform, Entity, &mut Health, &Children, &mut Velocity), (Without<Player>, With<Ai>, Without<Bullet>)>,
-    mut players: Query<(&mut Transform, Entity, &mut Health, &Children, &mut Velocity), (With<Player>, Without<Ai>, Without<Bullet>)>,
-    mut healthbar_query: Query<(&mut Transform, &mut Sprite, &MaxHealth), (With<Healthbar>, Without<Ai>, Without<Player>, Without<Bullet>)>,
+    mut ais: Query<(&Transform, Entity, &mut Health, &mut Velocity), (Without<Player>, With<Ai>, Without<Bullet>)>,
+    mut players: Query<(&mut Transform, Entity, &mut Health, &mut Velocity), (With<Player>, Without<Ai>, Without<Bullet>)>,
     mut ai_killed: ResMut<AiKilled>, 
 ) {
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
         match bullet_type.from {
             TurretOf::Player => {
-                for (ai_transform, ai_entity, mut ai_health, children, mut velocity) in ais.iter_mut() {
+                for (ai_transform, ai_entity, mut ai_health, mut velocity) in ais.iter_mut() {
                     if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         let knockback = (ai_transform.translation - bullet_transform.translation).truncate().normalize()*KNOCKBACK;
                         velocity.value += knockback;
@@ -625,7 +624,7 @@ fn hurt_tanks(
                 }
             }
             TurretOf::Ai => {
-                for (player_transform, player_entity, mut player_health, children, mut velocity) in players.iter_mut() {
+                for (player_transform, player_entity, mut player_health, mut velocity) in players.iter_mut() {
                     if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
                         let knockback = (player_transform.translation - bullet_transform.translation).truncate().normalize()*KNOCKBACK;
                         velocity.value += knockback;
