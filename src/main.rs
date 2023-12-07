@@ -20,6 +20,8 @@ use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
 // use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
+mod utils;
+use crate::utils::Health;
 
 mod tanks;
 use tanks::*;
@@ -60,12 +62,6 @@ fn main() {
         create_enemy,
         setup,
     ))
-
-    // .add_systems(PostUpdate, (
-    //     play_gunshot,
-    //     play_tankhit,
-    //     play_wallhit,
-    // ))
     
     .add_systems(Update, (
         mouse_button_input,
@@ -76,6 +72,7 @@ fn main() {
         hurt_tanks,
         collide_tanks,
         update_kills_text,
+        update_healthbar,
     ))
 
     .add_systems(FixedUpdate, (
@@ -612,14 +609,6 @@ fn hurt_tanks(
 
                         if ai_health.value > 1 {
                             ai_health.value -= 1;
-                            for healthbar in children.iter() {
-                                if let Ok((mut transform, mut sprite, max_health)) = healthbar_query.get_mut(*healthbar) {
-                                    transform.scale.x = ai_health.value as f32 / max_health.0 as f32 * HEALTHBAR_WIDTH;
-                                    transform.translation.x -= HEALTHBAR_WIDTH / max_health.0 as f32 / 2.0;
-                                    // transform.translation.x = 0.0 - ai_health.value as f32 / max_health.0 as f32 * HEALTHBAR_WIDTH / 2.0;
-                                    sprite.color = Color::hsl(ai_health.value as f32 / max_health.0 as f32 * 150.0, 0.98, 0.58);
-                                }
-                            }
                         } else {
                             commands.entity(ai_entity).despawn_recursive(); 
                             ai_killed.score += 1;
@@ -642,13 +631,6 @@ fn hurt_tanks(
 
                         if player_health.value > 1 {
                             player_health.value -= 1;
-                            for healthbar in children.iter() {
-                                if let Ok((mut transform, mut sprite, max_health)) = healthbar_query.get_mut(*healthbar) {
-                                    transform.scale.x = player_health.value as f32 / max_health.0 as f32 * HEALTHBAR_WIDTH;
-                                    transform.translation.x -= HEALTHBAR_WIDTH / max_health.0 as f32 / 2.0;
-                                    sprite.color = Color::hsl(player_health.value as f32 / max_health.0 as f32 * 150.0, 0.98, 0.58);
-                                }
-                            }
                         } else {
                             commands.entity(player_entity).despawn_recursive(); 
                             ai_killed.score += 0;

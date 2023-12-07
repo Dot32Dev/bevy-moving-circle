@@ -2,6 +2,7 @@
 // TODO: Fix bearing using a sprite bundle (+ remember why bearing exists?)
 
 use bevy::prelude::*;
+use crate::utils::Health;
 
 pub const TANK_SPEED: f32 = 2.0/3.0;
 pub const TANK_SIZE: f32 = 20.0; 
@@ -32,11 +33,6 @@ pub struct Active {
 #[derive(Component)]
 pub struct AttackTimer {
     pub value: f32,
-}
-
-#[derive(Component)]
-pub struct Health {
-    pub value: u8,
 }
 
 // How long an AI is continuing in a direction for
