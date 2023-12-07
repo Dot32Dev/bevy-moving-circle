@@ -326,7 +326,7 @@ fn collide_tanks(
     // Find the movement of each tank
     for (i, tank) in tanks.iter().enumerate() {
         for (j, sibling) in tanks.iter().enumerate() {
-            if tank != sibling {
+            if tank.translation != sibling.translation {
                 let distance = distance_between(&tank.translation.truncate(), &sibling.translation.truncate());
                 if distance < TANK_SIZE * 2.0 {
                     // Gets the direction and how far it should move
@@ -760,6 +760,5 @@ fn update_kills_text(
 
 fn distance_between(point1: &Vec2, point2: &Vec2) -> f32 {
     let diff = *point1 - *point2; // (Your assumption *was* correct btw, but this works)
-    // (diff.x.powf(2.0) + diff.y.powf(2.0)).sqrt()
     diff.length()
 }
