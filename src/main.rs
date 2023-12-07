@@ -73,6 +73,7 @@ fn main() {
         collide_tanks,
         update_kills_text,
         update_healthbar,
+        update_healthbar_border,
     ))
 
     .add_systems(FixedUpdate, (
@@ -196,7 +197,7 @@ fn create_player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(TankBundle::new(&mut meshes, &mut materials, 5)) // "5" is the amount of health we spawn the tank with
+    commands.spawn(TankBundle::new(&mut meshes, &mut materials, 4)) // "4" is the amount of health we spawn the tank with
     .insert(Player)
     .insert(Name::new("Player"))
     .with_children(|parent| {
@@ -212,7 +213,7 @@ fn create_player(
                 parent.spawn(TurretBundle::new());
             });
         });
-        parent.spawn(HealthbarBundle::new(5)); // "5" is the max health 
+        parent.spawn(HealthbarBundle::new(4)); // "4" is the max health 
         parent.spawn(HealthbarBorderBundle::new());
     });
 }
@@ -224,7 +225,7 @@ fn create_enemy(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for _ in 0..2 {
-        commands.spawn(TankBundle::new(&mut meshes, &mut materials, 5)) // "5" is the amount of health we spawn the tank with
+        commands.spawn(TankBundle::new(&mut meshes, &mut materials, 4)) // "4" is the amount of health we spawn the tank with
         .insert(AiBundle::new())
         .insert(Name::new("Enemy"))
         .with_children(|parent| {
@@ -240,7 +241,7 @@ fn create_enemy(
                     parent.spawn(TurretBundle::new());
                 });
             });
-            parent.spawn(HealthbarBundle::new(5)); // "5" is the max health
+            parent.spawn(HealthbarBundle::new(4)); // "4" is the max health
             parent.spawn(HealthbarBorderBundle::new());
         });
     }
