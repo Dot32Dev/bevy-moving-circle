@@ -2,7 +2,9 @@ use bevy::prelude::*;
 use crate::utils::Health;
 
 pub const HEALTHBAR_WIDTH: f32 = 50.0;
+pub const HEALTHBAR_HEIGHT: f32 = 10.0;
 pub const HEALTHBAR_Y_OFFSET: f32 = 40.0;
+pub const HEALTHBAR_BORDER_WIDTH: f32 = 4.0;
 
 #[derive(Component)]
 pub struct Healthbar;
@@ -54,7 +56,7 @@ impl HealthbarBundle {
                     ..default()
                 },
                 transform: Transform {
-                    scale: Vec3::new(HEALTHBAR_WIDTH, 10.0, 0.),
+                    scale: Vec3::new(HEALTHBAR_WIDTH, HEALTHBAR_HEIGHT, 0.),
                     translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 1.0),
                     ..default()
                 },
@@ -83,7 +85,11 @@ impl HealthbarBorderBundle {
                     ..default()
                 },
                 transform: Transform {
-                    scale: Vec3::new(HEALTHBAR_WIDTH+8.0, 18.0, 0.),
+                    scale: Vec3::new(
+						HEALTHBAR_WIDTH  + HEALTHBAR_BORDER_WIDTH * 2.0, 
+						HEALTHBAR_HEIGHT + HEALTHBAR_BORDER_WIDTH * 2.0, 
+						0.0,
+					),
                     translation: Vec3::new(0.0, HEALTHBAR_Y_OFFSET, 0.5),
                     ..default()
                 },
