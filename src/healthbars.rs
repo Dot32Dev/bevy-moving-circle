@@ -110,7 +110,10 @@ pub fn keep_healthbars_on_screen(
     };
     // Rather than using the constant HEALTHBAR_BORDER_HEIGHT, from which these constants are
     // calculated from, we use these constants themselves. This means they could changed independently
-    // of the border height constant, and this system would continue to function.
+    // of the border height constant, and this system would continue to function. This height is
+    // calculated as being the height of the healthbars border, and is used for both the border
+    // and the inner health bar's calculations, as we want the inner healthbar to stop moving when the
+    // border stops moving as well. 
     let healthbar_height = HEALTHBAR_HEIGHT + HEALTHBAR_BORDER_THICKNESS*2.0;
     // The point at which the healthbars must update their transform is given by half of the screen
     // height and subtracting half of the healthbar's height. Transforms in Bevy are centred.
@@ -123,30 +126,36 @@ pub fn keep_healthbars_on_screen(
     // Loop over all the inner healthbars
     for (mut transform, global_transform) in healthbar.iter_mut() {
         // Calculate the healthbar parents's Y position by subtracting the relative position from the global position
-        let player_height = global_transform.translation().y - transform.translation.y;
-        // If the player height is less than the ceiling, then `ceiling - player_height` will be positive. If the player
-        // height is more than the ceiling, then `ceiling - player_height` will be negative. We take the smallest number
-        // between the result and the healthbar's Y offset with .min(), and set the healthbar's Y to that. Imagine for a 
-        // moment that instead of taking the min between HEALTHBAR_Y_OFFSET, we took it with 0. The min function returns
-        // the lowest of its two inputs. If `ceiling - player_height` was larger than than 0, we would stay with 0, with
-        // no offset from the players position. If instead, the result was negative, (if the player height was above the 
-        // ceiling) then that value would be chosen, and the bar would be moved down by that amount! Of course, the real
-        // scenario has a HEALTHBAR_Y_OFFSET there. This means that, assuming `ceiling - player_height` is more than the 
-        // HEALTHBAR_Y_OFFSET, the transform remains unchanged from the healthbar offset. But, as soon as the difference
-        // is less than the offset, the new transform is set to the difference!!! This means that the healthbar stays on
-        // the screen, snapping to the top of the screen without any if statements! Appologies for the poor explanation.
-        transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
+        let parent_y = global_transform.translation().y - transform.translation.y;
+        // `(ceiling - parent_y)` calculates the maximum height the healthbar could go to, relative to the parent.
+        // The min function returns the smallest of its two inputs. If the parent + HEALTHBAR_Y_OFFSET is less than the
+        // top of the screen, the healthbar will go there, otherwise the healthbar will go to the top of the screen. This
+        // essentially snaps the healthbar to the top of the screen whenever the parent goes too high. 
+        transform.translation.y = (HEALTHBAR_Y_OFFSET).min(ceiling - parent_y);
         
-        let player_x = global_transform.translation().x - transform.translation.x;
-        transform.translation.x = (0.0_f32).min(right_edge-player_x).max(-right_edge-player_x) - (HEALTHBAR_WIDTH - transform.scale.x)/2.0;
+        // As the healthbar loses health, the "inner healthbar" shrinks in width. If we want it to remain left-aligned
+        // rather than centred, we have to apply an offset to its X position.
+        let x_offset = (HEALTHBAR_WIDTH - transform.scale.x)/2.0;
+        // Here, something similar is done, except with the X. `right_edge-parent_x` calculates the distance from the 
+        // parent to the right edge, and `-right_edge-parent_x` calculates the difference to the left edge. (The left 
+        // edge is the opposite (negative) of the right edge). Normally, we want the X offset from the parent to be 0,
+        // but if the distance to the right edge os negative, then we would rather be there. If the distance to the 
+        // left egde is positive, then we would rather be there. Finally we subtract the x_offset to position the bar
+        // appropriately. The reason that the x_offset isn't placed within the brackets to be .min()'ed and .max()'ed
+        // is that we want this inner bar to stay put relative to the healthbar border. We shift it as if it were the
+        // same as the border.
+        let parent_x = global_transform.translation().x - transform.translation.x;
+        transform.translation.x = (0.0_f32).min(right_edge-parent_x).max(-right_edge-parent_x) - x_offset;
     }
     // Loop over all the healthbar borders
     for (mut transform, global_transform) in healthbar_border.iter_mut() {
-        let player_height = global_transform.translation().y - transform.translation.y;
-        transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
+        // This is exactly the same as with the inner healthbar
+        let parent_y = global_transform.translation().y - transform.translation.y;
+        transform.translation.y = (HEALTHBAR_Y_OFFSET).min(ceiling - parent_y);
 
-        let player_x = global_transform.translation().x - transform.translation.x;
-        transform.translation.x = (0.0_f32).min(right_edge-player_x).max(-right_edge-player_x);
+        // Similar to the inner healthbar, but without an X offset
+        let parent_x = global_transform.translation().x - transform.translation.x;
+        transform.translation.x = (0.0_f32).min(right_edge-parent_x).max(-right_edge-parent_x);
     }
 }
 
