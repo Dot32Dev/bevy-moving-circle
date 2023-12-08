@@ -41,9 +41,7 @@ pub fn update_healthbar(
 
 			// Set the width to the calculated width
 			transform.scale.x = inner_healthbar_width;
-			// Transforms in Bevy are centred. We find the left side of the healthbar, 
-			// and add half of the healthbar's width to find its centre.
-			transform.translation.x = -HEALTHBAR_WIDTH/2.0 + inner_healthbar_width/2.0;
+			// The keep_healthbars_on_screen system handles the healthbar's translation, so we don't need to update it here
 			// Set the colour. 150 is the hue for green.
 			sprite.color = Color::hsl(health_percentage * 150.0, 0.98, 0.58);
 		}
@@ -99,6 +97,8 @@ pub fn update_healthbar_sides(
     }
 }
 
+// This system handles the relative location of the healthbar to the player, such as ensuring the
+// healthbar doesn't go off-screen, and ensuring the inner healthbar stays left-aligned.
 pub fn keep_healthbars_on_screen(
     mut healthbar: Query<(&mut Transform, &GlobalTransform), (With<Healthbar>, Without<HealthbarBorder>)>,
     mut healthbar_border: Query<(&mut Transform, &GlobalTransform), (With<HealthbarBorder>, Without<Healthbar>)>,
@@ -108,25 +108,45 @@ pub fn keep_healthbars_on_screen(
         return;
 
     };
+    // Rather than using the constant HEALTHBAR_BORDER_HEIGHT, from which these constants are
+    // calculated from, we use these constants themselves. This means they could changed independently
+    // of the border height constant, and this system would continue to function.
+    let healthbar_height = HEALTHBAR_HEIGHT + HEALTHBAR_BORDER_THICKNESS*2.0;
+    // The point at which the healthbars must update their transform is given by half of the screen
+    // height and subtracting half of the healthbar's height. Transforms in Bevy are centred.
+    let ceiling = window.height()/2.0 -healthbar_height/2.0;
+    // Now we calculate the same for the right edge. The left edge can be inferred by taking the
+    // negative of the right edge.
+    let total_healthbar_width = HEALTHBAR_WIDTH + healthbar_height;
+    let right_edge = window.width()/2.0 - total_healthbar_width/2.0;
 
+    // Loop over all the inner healthbars
     for (mut transform, global_transform) in healthbar.iter_mut() {
-        let ceiling = window.height()/2.0 - 18.0/2.0;
+        // Calculate the healthbar parents's Y position by subtracting the relative position from the global position
         let player_height = global_transform.translation().y - transform.translation.y;
+        // If the player height is less than the ceiling, then `ceiling - player_height` will be positive. If the player
+        // height is more than the ceiling, then `ceiling - player_height` will be negative. We take the smallest number
+        // between the result and the healthbar's Y offset with .min(), and set the healthbar's Y to that. Imagine for a 
+        // moment that instead of taking the min between HEALTHBAR_Y_OFFSET, we took it with 0. The min function returns
+        // the lowest of its two inputs. If `ceiling - player_height` was larger than than 0, we would stay with 0, with
+        // no offset from the players position. If instead, the result was negative, (if the player height was above the 
+        // ceiling) then that value would be chosen, and the bar would be moved down by that amount! Of course, the real
+        // scenario has a HEALTHBAR_Y_OFFSET there. This means that, assuming `ceiling - player_height` is more than the 
+        // HEALTHBAR_Y_OFFSET, the transform remains unchanged from the healthbar offset. But, as soon as the difference
+        // is less than the offset, the new transform is set to the difference!!! This means that the healthbar stays on
+        // the screen, snapping to the top of the screen without any if statements! Appologies for the poor explanation.
         transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
-
-        // let healthbar_height = HEALTHBAR_HEIGHT + HEALTHBAR_BORDER_THICKNESS*2.0;
-        // let total_healthbar_width = HEALTHBAR_WIDTH + healthbar_height/2.0;
-        // let left_edge = -window.width()/2.0 + total_healthbar_width;
-        // let offset_left = global_transform.translation().x - left_edge;
-        // if offset_left < 0.0  {
-        //     transform.translation.x = -offset_left
-        // }
-
+        
+        let player_x = global_transform.translation().x - transform.translation.x;
+        transform.translation.x = (0.0_f32).min(right_edge-player_x).max(-right_edge-player_x) - (HEALTHBAR_WIDTH - transform.scale.x)/2.0;
     }
+    // Loop over all the healthbar borders
     for (mut transform, global_transform) in healthbar_border.iter_mut() {
-        let ceiling = window.height()/2.0 - 18.0/2.0;
         let player_height = global_transform.translation().y - transform.translation.y;
         transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
+
+        let player_x = global_transform.translation().x - transform.translation.x;
+        transform.translation.x = (0.0_f32).min(right_edge-player_x).max(-right_edge-player_x);
     }
 }
 
