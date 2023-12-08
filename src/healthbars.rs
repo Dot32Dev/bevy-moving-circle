@@ -220,3 +220,78 @@ impl HealthbarBorderBundle {
         }
     }
 }
+
+#[derive(Bundle)]
+pub struct HealthbarSideBundle<M: bevy::sprite::Material2d> {
+    material_bundle: bevy::sprite::MaterialMesh2dBundle<M>,
+    healthbar_side: HealthbarSide,
+}
+
+impl HealthbarSideBundle<ColorMaterial> {
+    pub fn new(
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<ColorMaterial>>,
+        side: Side,
+    ) -> HealthbarSideBundle<ColorMaterial> {
+        HealthbarSideBundle {
+            material_bundle: bevy::sprite::MaterialMesh2dBundle {
+                mesh: meshes.add(shape::Circle::new(0.5).into()).into(),
+                material: materials.add(Color::BLACK.into()),
+                transform: Transform {
+                    translation: Vec3::new(0.0, 0.0, 0.1),
+                    ..default()
+                },
+                ..default()
+            },
+            healthbar_side: HealthbarSide(side),
+        }
+    }
+}
+
+// (MaterialMesh2dBundle {
+//     mesh: meshes.add(shape::Circle::new(0.5).into()).into(),
+//     material: materials.add(Color::BLACK.into()),
+//     transform: Transform::from_xyz(0.0, 0.0, 0.1),
+//     ..Default::default()
+// },
+// HealthbarSide(Side::Left)
+
+// #[derive(Bundle)]
+// pub struct TankBundle<M: bevy::sprite::Material2d> {
+//     tank: Tank, // Marker component
+//     material_bundle: bevy::sprite::MaterialMesh2dBundle<M>, // Colour
+//     attack_timer: AttackTimer,
+//     health: Health,
+//     velocity: Velocity,
+// }
+
+// // TANK BUNDLE
+// impl TankBundle<ColorMaterial> {
+//     pub fn new(
+//         meshes: &mut ResMut<Assets<Mesh>>,
+//         materials: &mut ResMut<Assets<ColorMaterial>>,
+//         health: u8,
+//     ) -> TankBundle<ColorMaterial> {
+//         TankBundle {
+//             material_bundle: bevy::sprite::MaterialMesh2dBundle {
+//                 mesh: meshes.add(shape::Circle::new(TANK_SIZE).into()).into(),
+//                 material: materials.add(ColorMaterial::from(Color::BLACK)),
+//                 transform: Transform {
+//                     translation: Vec3::new(0.0, 0.0, 1.0),
+//                     ..default()
+//                 },
+//                 ..default()
+//             },
+//             tank: Tank,
+//             attack_timer: AttackTimer {
+//                 value: 0.0,
+//             },
+//             health: Health {
+//                 value: health,
+//             },
+//             velocity: Velocity {
+//                 value: Vec2::new(0.0, 0.0),
+//             },
+//         }
+//     }
+// }
