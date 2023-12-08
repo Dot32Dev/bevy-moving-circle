@@ -8,6 +8,11 @@
 // TODO: Add k/d ratio at the top of the screen
 // TODO: Rounded corners UI
 
+// TODO: Remove bearing
+// TODO: Bundle the healthbar sides
+// TODO: Pausing
+// TODO: Flash yellow on hit
+
 use bevy::{
     prelude::*, 
     window::*, 
@@ -649,28 +654,6 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
         }
     }
 
-}
-
-fn keep_healthbars_on_screen(
-    mut healthbar: Query<(&mut Transform, &GlobalTransform), (With<Healthbar>, Without<HealthbarBorder>)>,
-    mut healthbar_border: Query<(&mut Transform, &GlobalTransform), (With<HealthbarBorder>, Without<Healthbar>)>,
-    primary_window: Query<&Window, With<PrimaryWindow>>
-) {
-    let Ok(window) = primary_window.get_single() else {
-        return;
-
-    };
-
-    for (mut transform, global_transform) in healthbar.iter_mut() {
-        let ceiling = window.height()/2.0 - 18.0/2.0;
-        let player_height = global_transform.translation().y - transform.translation.y;
-        transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
-    }
-    for (mut transform, global_transform) in healthbar_border.iter_mut() {
-        let ceiling = window.height()/2.0 - 18.0/2.0;
-        let player_height = global_transform.translation().y - transform.translation.y;
-        transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
-    }
 }
 
 fn hurt_tanks(

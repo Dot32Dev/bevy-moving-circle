@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::*;
 use crate::utils::Health;
 
 pub const HEALTHBAR_Y_OFFSET: f32 = 40.0;
@@ -95,6 +96,37 @@ pub fn update_healthbar_sides(
             let mut material = materials.get_mut(material_handle.id()).unwrap();
             material.color = parent_sprite.color;
 		}
+    }
+}
+
+pub fn keep_healthbars_on_screen(
+    mut healthbar: Query<(&mut Transform, &GlobalTransform), (With<Healthbar>, Without<HealthbarBorder>)>,
+    mut healthbar_border: Query<(&mut Transform, &GlobalTransform), (With<HealthbarBorder>, Without<Healthbar>)>,
+    primary_window: Query<&Window, With<PrimaryWindow>>
+) {
+    let Ok(window) = primary_window.get_single() else {
+        return;
+
+    };
+
+    for (mut transform, global_transform) in healthbar.iter_mut() {
+        let ceiling = window.height()/2.0 - 18.0/2.0;
+        let player_height = global_transform.translation().y - transform.translation.y;
+        transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
+
+        // let healthbar_height = HEALTHBAR_HEIGHT + HEALTHBAR_BORDER_THICKNESS*2.0;
+        // let total_healthbar_width = HEALTHBAR_WIDTH + healthbar_height/2.0;
+        // let left_edge = -window.width()/2.0 + total_healthbar_width;
+        // let offset_left = global_transform.translation().x - left_edge;
+        // if offset_left < 0.0  {
+        //     transform.translation.x = -offset_left
+        // }
+        
+    }
+    for (mut transform, global_transform) in healthbar_border.iter_mut() {
+        let ceiling = window.height()/2.0 - 18.0/2.0;
+        let player_height = global_transform.translation().y - transform.translation.y;
+        transform.translation.y = (ceiling - player_height).min(HEALTHBAR_Y_OFFSET);
     }
 }
 
