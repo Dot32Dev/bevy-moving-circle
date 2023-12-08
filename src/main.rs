@@ -287,45 +287,13 @@ fn create_enemy(
             });
             parent.spawn(HealthbarBundle::new(4)) // "4" is the max health 
             .with_children(|parent| {
-                parent.spawn(
-                    (MaterialMesh2dBundle {
-                        mesh: meshes.add(shape::Circle::new(0.5).into()).into(),
-                        material: materials.add(Color::BLACK.into()),
-                        transform: Transform::from_xyz(0.0, 0.0, 0.1),
-                        ..Default::default()
-                    },
-                    HealthbarSide(Side::Left)
-                ));
-                parent.spawn(
-                    (MaterialMesh2dBundle {
-                        mesh: meshes.add(shape::Circle::new(0.5).into()).into(),
-                        material: materials.add(Color::BLACK.into()),
-                        transform: Transform::from_xyz(0.0, 0.0, 0.1),
-                        ..Default::default()
-                    },
-                    HealthbarSide(Side::Right)
-                ));
+                parent.spawn(HealthbarSideBundle::new(&mut meshes, &mut materials, Side::Left));
+                parent.spawn(HealthbarSideBundle::new(&mut meshes, &mut materials, Side::Right));
             });
             parent.spawn(HealthbarBorderBundle::new())
             .with_children(|parent| {
-                parent.spawn(
-                    (MaterialMesh2dBundle {
-                        mesh: meshes.add(shape::Circle::new(0.5).into()).into(),
-                        material: materials.add(Color::BLACK.into()),
-                        transform: Transform::from_xyz(0.0, 0.0, 0.1),
-                        ..Default::default()
-                    },
-                    HealthbarSide(Side::Left)
-                ));
-                parent.spawn(
-                    (MaterialMesh2dBundle {
-                        mesh: meshes.add(shape::Circle::new(0.5).into()).into(),
-                        material: materials.add(Color::BLACK.into()),
-                        transform: Transform::from_xyz(0.0, 0.0, 0.1),
-                        ..Default::default()
-                    },
-                    HealthbarSide(Side::Right)
-                ));
+                parent.spawn(HealthbarSideBundle::new(&mut meshes, &mut materials, Side::Left));
+                parent.spawn(HealthbarSideBundle::new(&mut meshes, &mut materials, Side::Right));
             });
         });
     }
