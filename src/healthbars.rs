@@ -79,9 +79,9 @@ pub fn update_healthbar_border(
 pub fn update_healthbar_sides(
     mut materials: ResMut<Assets<ColorMaterial>>,
 	bars: Query<(&Transform, &Sprite), Without<HealthbarSide>>,
-	mut sides: Query<(&mut Transform, &mut Handle<ColorMaterial>, &Parent, &HealthbarSide)>
+	mut sides: Query<(&mut Transform, &Handle<ColorMaterial>, &Parent, &HealthbarSide)>
 ) {
-    for (mut transform, mut material_handle, parent, side) in sides.iter_mut() {
+    for (mut transform, material_handle, parent, side) in sides.iter_mut() {
 		// We have the side circle's components
 		if let Ok((parent_transform, parent_sprite)) = bars.get(parent.get()) {
 			// We now have the transform and sprite of the side circle's parent
@@ -121,7 +121,7 @@ pub fn keep_healthbars_on_screen(
         // if offset_left < 0.0  {
         //     transform.translation.x = -offset_left
         // }
-        
+
     }
     for (mut transform, global_transform) in healthbar_border.iter_mut() {
         let ceiling = window.height()/2.0 - 18.0/2.0;

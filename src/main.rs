@@ -44,13 +44,16 @@ const MUTE: bool = false;
 const BULLET_SIZE: f32 = 6.0; 
 const KNOCKBACK: f32 = 5.0;
 
+const GAME_WIDTH: f32 = 800.0;
+const GAME_HEIGHT: f32 = 600.0;
+
 fn main() {
     App::new()
     .add_plugins(
         DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Tiny Tank (Bevy Edition)".into(),
-                resolution: WindowResolution::new(800., 600.),
+                resolution: WindowResolution::new(GAME_WIDTH, GAME_HEIGHT),
                 present_mode: PresentMode::Fifo,
                 ..default()
             }),
@@ -59,7 +62,7 @@ fn main() {
         .build()
     )
     .add_plugins(EmbeddedAssetPlugin::default())
-    .insert_resource(ClearColor(Color::rgb(0.7, 0.55, 0.41)))
+    .insert_resource(ClearColor(Color::rgb(0.49, 0.31, 0.25)))
     .insert_resource(AiKilled { score: 0})
 
     .add_systems(Startup, (
@@ -97,8 +100,35 @@ fn setup(
     mut commands: Commands,
     // asset_server: Res<AssetServer>,
 ) {
-    commands.spawn(Camera2dBundle::default());
+    // commands.spawn(Camera2dBundle::default());
+    commands.spawn((
+        Camera2dBundle {
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            tonemapping: bevy::core_pipeline::tonemapping::Tonemapping::None,
+            camera: Camera {
+                ..default()
+            },
+            ..default()
+        },
+        // bevy::render::view::ColorGrading {
+        //     exposure: 0.0,
+        //     gamma: 1.0,
+        //     pre_saturation: 1.0,
+        //     post_saturation: 1.0,
+        // },
+    ));
     println!("{}", env::consts::OS); // Prints the current OS.
+
+    // Spawn rectangle as background
+    commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            color: Color::rgb(0.7, 0.55, 0.41),
+            custom_size: Some(Vec2::new(GAME_WIDTH, GAME_HEIGHT)),
+            ..default()
+        },
+        transform: Transform::from_translation(Vec3::new(0.0, 0.0, -30.0)),
+        ..default()
+    });
 
     // commands.spawn_bundle(ButtonBundle {
     //     style: Style {
@@ -362,34 +392,29 @@ fn movement(
 
 fn keep_tanks_on_screen(
     mut tanks: Query<(&mut Transform, &mut Velocity, Option<&mut DirectionAi>), With<Tank>>,
-    // primary_window: Query<&Window, With<PrimaryWindow>>
-    primary_window: Query<&Window, With<PrimaryWindow>>
 ) {
-    let Ok(window) = primary_window.get_single() else {
-        return;
-    };
     for (mut tank, mut velocity, direction) in tanks.iter_mut() {
 
         let mut tempdir = 5;
 
-        if tank.translation.x + TANK_SIZE > window.width() - window.width()/2.0 {
+        if tank.translation.x + TANK_SIZE > GAME_WIDTH - GAME_WIDTH/2.0 {
             velocity.value.x = 0.0;
-            tank.translation.x = window.width()/2.0 - TANK_SIZE;
+            tank.translation.x = GAME_WIDTH/2.0 - TANK_SIZE;
             tempdir = 0;
         }
-        if tank.translation.x - TANK_SIZE < -window.width()/2.0 {
+        if tank.translation.x - TANK_SIZE < -GAME_WIDTH/2.0 {
             velocity.value.x = 0.0;
-            tank.translation.x = -window.width()/2.0 + TANK_SIZE;
+            tank.translation.x = -GAME_WIDTH/2.0 + TANK_SIZE;
             tempdir = 1;
         }
-        if tank.translation.y + TANK_SIZE > window.height() - window.height()/2.0 {
+        if tank.translation.y + TANK_SIZE > GAME_HEIGHT - GAME_HEIGHT/2.0 {
             velocity.value.y = 0.0;
-            tank.translation.y = window.height()/2.0 - TANK_SIZE;
+            tank.translation.y = GAME_HEIGHT/2.0 - TANK_SIZE;
             tempdir = 2;
         }
-        if tank.translation.y - TANK_SIZE < -window.height()/2.0 {
+        if tank.translation.y - TANK_SIZE < -GAME_HEIGHT/2.0 {
             velocity.value.y = 0.0;
-            tank.translation.y = -window.height()/2.0 + TANK_SIZE;
+            tank.translation.y = -GAME_HEIGHT/2.0 + TANK_SIZE;
             tempdir = 3;
         }
 
@@ -723,15 +748,9 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
 fn kill_bullets(
     mut commands: Commands,
     mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,
-    primary_window: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let Ok(window) = primary_window.get_single() else {
-        return;
-
-    };
-
     for ((transform, bullet_entity), _bullet) in bullets.iter_mut() {
-        if transform.translation.x.abs() > window.width()/2. || transform.translation.y.abs() > window.height()/2. { 
+        if transform.translation.x.abs() > GAME_WIDTH/2. || transform.translation.y.abs() > GAME_HEIGHT/2. { 
             commands.entity(bullet_entity).despawn(); 
             if !MUTE {
                 // Goofy ahh work around to world being exclusive
