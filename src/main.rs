@@ -9,7 +9,6 @@
 // TODO: Rounded corners UI
 
 // TODO: Remove bearing
-// TODO: Bundle the healthbar sides
 // TODO: Pausing
 // TODO: Flash yellow on hit
 
@@ -373,8 +372,8 @@ fn collide_tanks(
     // Find the movement of each tank
     for (i, tank) in tanks.iter().enumerate() {
         for (j, sibling) in tanks.iter().enumerate() {
-            if tank.translation != sibling.translation {
-                let distance = distance_between(&tank.translation.truncate(), &sibling.translation.truncate());
+            if tank != sibling {
+                let distance = (tank.translation.truncate() - sibling.translation.truncate()).length();
                 if distance < TANK_SIZE * 2.0 {
                     // Gets the direction and how far it should move
                     let direction = (tank.translation.truncate() - sibling.translation.truncate()).normalize();
@@ -628,7 +627,7 @@ fn hurt_tanks(
         match bullet_type.from {
             TurretOf::Player => {
                 for (ai_transform, ai_entity, mut ai_health, mut velocity) in ais.iter_mut() {
-                    if distance_between(&ai_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
+                    if (ai_transform.translation.truncate() - bullet_transform.translation.truncate()).length() < TANK_SIZE+BULLET_SIZE {
                         let knockback = (ai_transform.translation - bullet_transform.translation).truncate().normalize()*KNOCKBACK;
                         velocity.value += knockback;
 
@@ -650,7 +649,7 @@ fn hurt_tanks(
             }
             TurretOf::Ai => {
                 for (player_transform, player_entity, mut player_health, mut velocity) in players.iter_mut() {
-                    if distance_between(&player_transform.translation.truncate(), &bullet_transform.translation.truncate()) < TANK_SIZE+BULLET_SIZE {
+                    if (player_transform.translation.truncate() - bullet_transform.translation.truncate()).length() < TANK_SIZE+BULLET_SIZE {
                         let knockback = (player_transform.translation - bullet_transform.translation).truncate().normalize()*KNOCKBACK;
                         velocity.value += knockback;
 
@@ -775,9 +774,4 @@ fn update_kills_text(
         // println!("{}", ai_killed.score);
         kills_text.sections[0].value = format!("Kills: {}", ai_killed.score);
     }
-}
-
-fn distance_between(point1: &Vec2, point2: &Vec2) -> f32 {
-    let diff = *point1 - *point2; // (Your assumption *was* correct btw, but this works)
-    diff.length()
 }
