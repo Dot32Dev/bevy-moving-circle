@@ -794,9 +794,26 @@ fn update_kills_text(
 fn pause_system(
     keyboard_input: Res<Input<KeyCode>>,
     mut next_state: ResMut<NextState<AppState>>,
+    mut windows: Query<(Entity, &Window)>,
+    mut focus_event: EventReader<WindowFocused>,
 ) {
     if keyboard_input.just_pressed(KeyCode::P)  {
         next_state.set(AppState::Paused);
+    }
+
+    let (window_entity, _window_properties) = windows.single_mut();
+  
+    for event in focus_event.read() {
+        if event.window == window_entity {
+            match event.focused {
+                true => {
+                    // next_state.set(AppState::Game);
+                }
+                false => {
+                    next_state.set(AppState::Paused);
+                }
+            }
+        }
     }
 }
 
