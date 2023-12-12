@@ -15,7 +15,7 @@ use bevy::{
     prelude::*, 
     window::*, 
     sprite::MaterialMesh2dBundle,
-    ecs::system::RunSystemOnce,
+    ecs::system::RunSystemOnce, render::camera::ScalingMode,
 };
 
 use std::env; // Detect OS for OS specific keybinds
@@ -23,6 +23,7 @@ use dot32_intro::*;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use rand::Rng;
 // use bevy_inspector_egui::{WorldInspectorPlugin, RegisterInspectable, WorldInspectorParams};
+// use bevy_inspector_egui::quick::WorldInspectorPlugin;
 mod utils;
 use crate::utils::Health;
 
@@ -99,6 +100,7 @@ fn main() {
     ).run_if(in_state(AppState::Game)))
     .insert_resource(Time::<Fixed>::from_seconds(TIME_STEP))
 
+    // .add_plugins(WorldInspectorPlugin::new())
     .add_plugins(Intro)
     .run();
 }
@@ -110,9 +112,13 @@ fn setup(
     // commands.spawn(Camera2dBundle::default());
     commands.spawn((
         Camera2dBundle {
-            transform: Transform::from_xyz(0.0, 0.0, 0.0),
-            tonemapping: bevy::core_pipeline::tonemapping::Tonemapping::None,
-            camera: Camera {
+            transform: Transform::from_xyz(0.0, 0.0, 100.0),
+            // tonemapping: bevy::core_pipeline::tonemapping::Tonemapping::None,
+            // camera: Camera {
+            //     ..default()
+            // },
+            projection: OrthographicProjection {
+                scaling_mode: ScalingMode::AutoMin { min_width: GAME_WIDTH, min_height: GAME_HEIGHT },
                 ..default()
             },
             ..default()
@@ -135,7 +141,7 @@ fn setup(
         },
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, -30.0)),
         ..default()
-    });
+    }).insert(Name::new("Background"));
 
     // commands.spawn_bundle(ButtonBundle {
     //     style: Style {
@@ -824,3 +830,14 @@ fn unpause_system(
         next_state.set(AppState::Game);
     }
 }
+
+// fn on_resise_system(
+//     mut resize_reader: EventReader<WindowResized>,
+// ) {
+//     for event in resize_reader.read() {
+//         // When resolution is being changed
+//         // text.sections[0].value = format!("{:.1} x {:.1}", e.width, e.height);
+//         // zoom = math.min(w/screenWidth, h/screenHeight)
+
+//     }
+// }
