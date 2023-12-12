@@ -8,7 +8,6 @@
 // TODO: Add k/d ratio at the top of the screen
 // TODO: Rounded corners UI
 
-// TODO: Remove bearing
 // TODO: Pausing
 // TODO: Flash yellow on hit
 
@@ -60,6 +59,7 @@ fn main() {
         })
         .build()
     )
+    .add_state::<AppState>()
     .add_plugins(EmbeddedAssetPlugin::default())
     .insert_resource(ClearColor(Color::rgb(0.49, 0.31, 0.25)))
     .insert_resource(AiKilled { score: 0})
@@ -70,6 +70,7 @@ fn main() {
         setup,
     ))
     
+    // Game systems
     .add_systems(Update, (
         mouse_button_input,
         ai_rotate,
@@ -82,13 +83,20 @@ fn main() {
         update_healthbar,
         update_healthbar_border,
         update_healthbar_sides,
-    ))
+        pause_system,
+    ).run_if(in_state(AppState::Game)))
 
+    // Pause systems
+    .add_systems(Update, (
+        unpause_system,
+    ).run_if(in_state(AppState::Paused)))
+
+    // Fixed-update game systems
     .add_systems(FixedUpdate, (
         update_bullets,
         movement,
         ai_movement,
-    ))
+    ).run_if(in_state(AppState::Game)))
     .insert_resource(Time::<Fixed>::from_seconds(TIME_STEP))
 
     .add_plugins(Intro)
@@ -201,6 +209,13 @@ fn setup(
     //     ..default()
     // }).insert(KillsText);
     
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+enum AppState {
+    #[default]
+    Paused,
+    Game,
 }
 
 enum TurretOf {
@@ -773,5 +788,23 @@ fn update_kills_text(
     for mut kills_text in kills.iter_mut() {
         // println!("{}", ai_killed.score);
         kills_text.sections[0].value = format!("Kills: {}", ai_killed.score);
+    }
+}
+
+fn pause_system(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::P)  {
+        next_state.set(AppState::Paused);
+    }
+}
+
+fn unpause_system(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::P)  {
+        next_state.set(AppState::Game);
     }
 }
