@@ -236,7 +236,7 @@ impl HealthbarSideBundle<ColorMaterial> {
         HealthbarSideBundle {
             material_bundle: bevy::sprite::MaterialMesh2dBundle {
                 mesh: meshes.add(shape::Circle::new(0.5).into()).into(),
-                material: materials.add(Color::BLACK.into()),
+                material: materials.add(Color::NONE.into()),
                 transform: Transform {
                     translation: Vec3::new(0.0, 0.0, 0.1),
                     ..default()
