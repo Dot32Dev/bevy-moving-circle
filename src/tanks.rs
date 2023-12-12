@@ -1,5 +1,4 @@
-// TODO: Fix passing colour to something which will ignore it and always be black
-// TODO: Fix bearing using a sprite bundle (+ remember why bearing exists?)
+// TODO: Fix bearing using a sprite bundle
 
 use bevy::prelude::*;
 use crate::utils::Health;
@@ -35,6 +34,14 @@ pub struct AttackTimer {
     pub value: f32,
 }
 
+// Time since last got damage
+#[derive(Component)]
+pub struct HitTimer(pub f32);
+
+// So that the flash yellow on damage system knows what colour to return to
+#[derive(Component)]
+pub struct OriginalColour(pub Color);
+
 // How long an AI is continuing in a direction for
 #[derive(Component)]
 pub struct Steps {
@@ -60,8 +67,10 @@ pub struct TankBundle<M: bevy::sprite::Material2d> {
     tank: Tank, // Marker component
     material_bundle: bevy::sprite::MaterialMesh2dBundle<M>, // Colour
     attack_timer: AttackTimer,
+    hit_timer: HitTimer,
     health: Health,
     velocity: Velocity,
+    original_colour: OriginalColour,
 }
 
 // The AI Bundle is an extension to the Tank Bundle
@@ -76,7 +85,7 @@ pub struct AiBundle {
 #[derive(Bundle)]
 pub struct BearingBundle {
     // Sprite bundle is used to give the bearing a translation
-    // This is not necessary in later Bevy versions as the TranslationBundle exists
+    // This is not necessary in later Bevy versions as the SpatialBundle exists
     sprite_bundle: SpriteBundle,
     bearing: Bearing,
 }
@@ -148,12 +157,14 @@ impl TankBundle<ColorMaterial> {
             attack_timer: AttackTimer {
                 value: 0.0,
             },
+            hit_timer: HitTimer(1.0),
             health: Health {
                 value: health,
             },
             velocity: Velocity {
                 value: Vec2::new(0.0, 0.0),
             },
+            original_colour: OriginalColour(Color::BLACK)
         }
     }
 }

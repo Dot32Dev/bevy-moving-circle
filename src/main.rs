@@ -8,7 +8,6 @@
 // TODO: Add k/d ratio at the top of the screen
 // TODO: Rounded corners UI
 
-// TODO: Pausing
 // TODO: Flash yellow on hit
 
 use bevy::{
@@ -85,6 +84,8 @@ fn main() {
         update_healthbar_border,
         update_healthbar_sides,
         pause_system,
+        update_hit_timer,
+        flash_yellow,
     ).run_if(in_state(AppState::Game)))
 
     // Pause systems
@@ -640,17 +641,18 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
 fn hurt_tanks(
     mut commands: Commands,
     bullets: Query<(&Transform, Entity, &Bullet), (Without<Player>, Without<Ai>, With<Bullet>)>,
-    mut ais: Query<(&Transform, Entity, &mut Health, &mut Velocity), (Without<Player>, With<Ai>, Without<Bullet>)>,
-    mut players: Query<(&mut Transform, Entity, &mut Health, &mut Velocity), (With<Player>, Without<Ai>, Without<Bullet>)>,
+    mut ais: Query<(&Transform, Entity, &mut Health, &mut Velocity, &mut HitTimer), (Without<Player>, With<Ai>, Without<Bullet>)>,
+    mut players: Query<(&mut Transform, Entity, &mut Health, &mut Velocity, &mut HitTimer), (With<Player>, Without<Ai>, Without<Bullet>)>,
     mut ai_killed: ResMut<AiKilled>, 
 ) {
     for (bullet_transform, bullet_entity, bullet_type) in bullets.iter() {
         match bullet_type.from {
             TurretOf::Player => {
-                for (ai_transform, ai_entity, mut ai_health, mut velocity) in ais.iter_mut() {
+                for (ai_transform, ai_entity, mut ai_health, mut velocity, mut hit_timer) in ais.iter_mut() {
                     if (ai_transform.translation.truncate() - bullet_transform.translation.truncate()).length() < TANK_SIZE+BULLET_SIZE {
                         let knockback = (ai_transform.translation - bullet_transform.translation).truncate().normalize()*KNOCKBACK;
                         velocity.value += knockback;
+                        hit_timer.0 = 0.0;
 
                         if ai_health.value > 1 {
                             ai_health.value -= 1;
@@ -669,10 +671,11 @@ fn hurt_tanks(
                 }
             }
             TurretOf::Ai => {
-                for (player_transform, player_entity, mut player_health, mut velocity) in players.iter_mut() {
+                for (player_transform, player_entity, mut player_health, mut velocity, mut hit_timer) in players.iter_mut() {
                     if (player_transform.translation.truncate() - bullet_transform.translation.truncate()).length() < TANK_SIZE+BULLET_SIZE {
                         let knockback = (player_transform.translation - bullet_transform.translation).truncate().normalize()*KNOCKBACK;
                         velocity.value += knockback;
+                        hit_timer.0 = 0.0;
 
                         if player_health.value > 1 {
                             player_health.value -= 1;
@@ -841,3 +844,27 @@ fn unpause_system(
 
 //     }
 // }
+
+fn update_hit_timer(
+    time: Res<Time>,
+    mut hit_timers: Query<&mut HitTimer>,
+) {
+    for mut hit_timer in hit_timers.iter_mut() {
+        hit_timer.0 += time.delta_seconds()
+    }
+}
+
+fn flash_yellow(
+    entity: Query<(&HitTimer, &OriginalColour, &Handle<ColorMaterial>)>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    for (hit_timer, original_colour, material_handle) in entity.iter() {
+        let mut material = materials.get_mut(material_handle.id()).unwrap();
+
+        if hit_timer.0 < 1.0/15.0 {
+            material.color = Color::rgb(1.0, 1.0, 0.0);
+        } else {
+            material.color = original_colour.0;
+        }
+    }
+}
