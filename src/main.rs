@@ -792,8 +792,10 @@ fn update_kills_text(
 }
 
 fn pause_system(
+    // For updating pause state
     keyboard_input: Res<Input<KeyCode>>,
     mut next_state: ResMut<NextState<AppState>>,
+    // For detecting window focus
     mut windows: Query<(Entity, &Window)>,
     mut focus_event: EventReader<WindowFocused>,
 ) {
@@ -801,17 +803,12 @@ fn pause_system(
         next_state.set(AppState::Paused);
     }
 
+    // Pause the game if the window goes unfocussed
     let (window_entity, _window_properties) = windows.single_mut();
-  
     for event in focus_event.read() {
         if event.window == window_entity {
-            match event.focused {
-                true => {
-                    // next_state.set(AppState::Game);
-                }
-                false => {
-                    next_state.set(AppState::Paused);
-                }
+            if !event.focused {
+                next_state.set(AppState::Paused);
             }
         }
     }
@@ -820,8 +817,10 @@ fn pause_system(
 fn unpause_system(
     keyboard_input: Res<Input<KeyCode>>,
     mut next_state: ResMut<NextState<AppState>>,
+    // To unpause when the mouse is clicked
+    buttons: Res<Input<MouseButton>>, 
 ) {
-    if keyboard_input.just_pressed(KeyCode::P)  {
+    if keyboard_input.just_pressed(KeyCode::P) || buttons.pressed(MouseButton::Left) {
         next_state.set(AppState::Game);
     }
 }
