@@ -202,7 +202,7 @@ impl HealthbarBorderBundle {
         HealthbarBorderBundle {
             sprite_bundle: SpriteBundle {
                 sprite: Sprite {
-                    color: Color::rgba(0., 0., 0., 0.5),
+                    color: Color::hsl(150.0, 0.73, 0.48),
                     ..default()
                 },
                 transform: Transform {
