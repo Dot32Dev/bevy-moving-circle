@@ -114,6 +114,7 @@ impl BearingBundle {
 pub struct TurretBundle {
     sprite_bundle: SpriteBundle,
     turret: Turret,
+    original_color: OriginalColour,
 }
 
 impl TurretBundle {
@@ -132,6 +133,7 @@ impl TurretBundle {
                 ..default()
             },
             turret: Turret,
+            original_color: OriginalColour(Color::BLACK)
         }
     }
 }
