@@ -258,12 +258,15 @@ fn create_player(
     .insert(Player)
     .insert(Name::new("Player"))
     .with_children(|parent| {
-        parent.spawn(MaterialMesh2dBundle {
-            mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
-            material: materials.add(Color::rgb(0.35, 0.6, 0.99).into()),
-            transform: Transform::from_xyz(0.0, 0.0, 0.1),
-            ..Default::default()
-        })
+        parent.spawn((
+            MaterialMesh2dBundle {
+                mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
+                material: materials.add(Color::rgb(0.35, 0.6, 0.99).into()),
+                transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                ..Default::default()
+            },
+            OriginalColour(Color::rgb(0.35, 0.6, 0.99))
+        ))
         .with_children(|parent| {
             parent.spawn(BearingBundle::new())
             .with_children(|parent| {
@@ -294,12 +297,15 @@ fn create_enemy(
         .insert(AiBundle::new())
         .insert(Name::new("Enemy"))
         .with_children(|parent| {
-            parent.spawn(MaterialMesh2dBundle {
-                mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
-                material: materials.add(Color::rgb(0.89, 0.56, 0.26).into()),
-                transform: Transform::from_xyz(0.0, 0.0, 0.1),
-                ..Default::default()
-            })
+            parent.spawn((
+                MaterialMesh2dBundle {
+                    mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
+                    material: materials.add(Color::rgb(0.89, 0.56, 0.26).into()),
+                    transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                    ..Default::default()
+                },
+                OriginalColour(Color::rgb(0.89, 0.56, 0.26))
+            ))
             .with_children(|parent| {
                 parent.spawn(BearingBundle::new())
                 .with_children(|parent| {
@@ -855,16 +861,41 @@ fn update_hit_timer(
 }
 
 fn flash_yellow(
-    entity: Query<(&HitTimer, &OriginalColour, &Handle<ColorMaterial>)>,
+    tank: Query<(&HitTimer, &OriginalColour, &Handle<ColorMaterial>, &Children), (With<Tank>, Without<Turret>, Without<Bearing>)>,
+    mut tank_child_query: Query<(&Children, &OriginalColour, &Handle<ColorMaterial>), (Without<Tank>, Without<Turret>, Without<Bearing>)>,
+    mut bearings: Query<&Children, (With<Bearing>, Without<Tank>, Without<Turret>)>,
+    mut turret_query: Query<&OriginalColour, (With<Turret>, Without<Player>)>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (hit_timer, original_colour, material_handle) in entity.iter() {
+    for (hit_timer, original_colour, material_handle, children) in tank.iter() {
         let mut material = materials.get_mut(material_handle.id()).unwrap();
 
         if hit_timer.0 < 1.0/15.0 {
             material.color = Color::rgb(1.0, 1.0, 0.0);
         } else {
             material.color = original_colour.0;
+        }
+
+        for child in children.iter() {
+            if let Ok((tank_child_children, original_colour, material_handle)) = tank_child_query.get_mut(*child) {
+                let mut material = materials.get_mut(material_handle.id()).unwrap();
+                
+                if hit_timer.0 < 1.0/15.0 {
+                    material.color = Color::rgb(1.0, 1.0, 0.0);
+                } else {
+                    material.color = original_colour.0;
+                }
+
+                for bearing in tank_child_children.iter() {
+                    if let Ok(bearing_child) = bearings.get_mut(*bearing) {
+                        for turret in bearing_child.iter() {
+                            if let Ok(original_color) = turret_query.get_mut(*turret) {
+
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
