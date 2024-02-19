@@ -147,7 +147,7 @@ impl TankBundle<ColorMaterial> {
     ) -> TankBundle<ColorMaterial> {
         TankBundle {
             material_bundle: bevy::sprite::MaterialMesh2dBundle {
-                mesh: meshes.add(shape::Circle::new(TANK_SIZE).into()).into(),
+                mesh: meshes.add(shape::Circle::new(TANK_SIZE)).into(),
                 material: materials.add(ColorMaterial::from(Color::BLACK)),
                 transform: Transform {
                     translation: Vec3::new(0.0, 0.0, 1.0),

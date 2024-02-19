@@ -8,8 +8,6 @@
 // TODO: Add k/d ratio at the top of the screen
 // TODO: Rounded corners UI
 
-// TODO: Flash yellow on hit
-
 use bevy::{
     prelude::*, 
     window::*, 
@@ -59,7 +57,7 @@ fn main() {
         })
         .build()
     )
-    .add_state::<AppState>()
+    .init_state::<AppState>()
     .add_plugins(EmbeddedAssetPlugin::default())
     .insert_resource(ClearColor(Color::rgb(0.49, 0.31, 0.25)))
     .insert_resource(AiKilled { score: 0})
@@ -260,8 +258,8 @@ fn create_player(
     .with_children(|parent| {
         parent.spawn((
             MaterialMesh2dBundle {
-                mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
-                material: materials.add(Color::rgb(0.35, 0.6, 0.99).into()),
+                mesh: meshes.add(shape::Circle::new(16.0)).into(),
+                material: materials.add(Color::rgb(0.35, 0.6, 0.99)),
                 transform: Transform::from_xyz(0.0, 0.0, 0.1),
                 ..Default::default()
             },
@@ -299,8 +297,8 @@ fn create_enemy(
         .with_children(|parent| {
             parent.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(shape::Circle::new(16.0).into()).into(),
-                    material: materials.add(Color::rgb(0.89, 0.56, 0.26).into()),
+                    mesh: meshes.add(shape::Circle::new(16.0)).into(),
+                    material: materials.add(Color::rgb(0.89, 0.56, 0.26)),
                     transform: Transform::from_xyz(0.0, 0.0, 0.1),
                     ..Default::default()
                 },
@@ -327,23 +325,23 @@ fn create_enemy(
 }
 
 fn movement(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut positions: Query<(&mut Transform,
     &mut Velocity),
     With<Player>>,
     time: Res<Time>,
 ) {
     for (mut transform, mut velocity) in positions.iter_mut() {
-        if (keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
+        if (keyboard_input.pressed(KeyCode::ArrowLeft) || keyboard_input.pressed(KeyCode::KeyA)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
             velocity.value.x -= TANK_SPEED;
         }
-        if (keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
+        if (keyboard_input.pressed(KeyCode::ArrowRight) || keyboard_input.pressed(KeyCode::KeyD)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
             velocity.value.x += TANK_SPEED;
         }
-        if (keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
+        if (keyboard_input.pressed(KeyCode::ArrowDown) || keyboard_input.pressed(KeyCode::KeyS)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
             velocity.value.y -= TANK_SPEED;
         }
-        if (keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
+        if (keyboard_input.pressed(KeyCode::ArrowUp) || keyboard_input.pressed(KeyCode::KeyW)) && LENGTH + FADE + 1.0 < time.elapsed_seconds() as f32  {
             velocity.value.y += TANK_SPEED;
         }
 
@@ -453,7 +451,7 @@ fn ai_movement(
 
 
 fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
-    buttons: Res<Input<MouseButton>>, 
+    buttons: Res<ButtonInput<MouseButton>>, 
     primary_window: Query<&Window, With<PrimaryWindow>>,
     time: Res<Time>,
     
@@ -523,7 +521,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
                         commands.spawn((
                             MaterialMesh2dBundle {
-                                mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
+                                mesh: meshes.add(shape::Circle::new(BULLET_SIZE)).into(),
                                 material: materials.add(ColorMaterial::from(Color::BLACK)),
                                 transform: Transform::from_translation(Vec3::new(player.translation.x, player.translation.y, 0.0)),
                                 ..default()
@@ -603,7 +601,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                     }
                     commands.spawn((
                         MaterialMesh2dBundle {
-                            mesh: meshes.add(shape::Circle::new(BULLET_SIZE).into()).into(),
+                            mesh: meshes.add(shape::Circle::new(BULLET_SIZE)).into(),
                             material: materials.add(ColorMaterial::from(Color::BLACK)),
                             transform: Transform::from_translation(Vec3::new(ai.translation.x, ai.translation.y, 0.0)),
                             ..default()
@@ -712,9 +710,9 @@ fn update_bullets(mut bullets: Query<(&mut Transform, &Direction), With<Bullet>>
 
 fn kill_bullets(
     mut commands: Commands,
-    mut bullets: Query<((&mut Transform, Entity), With<Bullet>)>,
+    mut bullets: Query<(&mut Transform, Entity), With<Bullet>>,
 ) {
-    for ((transform, bullet_entity), _bullet) in bullets.iter_mut() {
+    for (transform, bullet_entity) in bullets.iter_mut() {
         if transform.translation.x.abs() > GAME_WIDTH/2. || transform.translation.y.abs() > GAME_HEIGHT/2. { 
             commands.entity(bullet_entity).despawn(); 
             if !MUTE {
@@ -808,13 +806,13 @@ fn update_kills_text(
 
 fn pause_system(
     // For updating pause state
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut next_state: ResMut<NextState<AppState>>,
     // For detecting window focus
     mut windows: Query<(Entity, &Window)>,
     mut focus_event: EventReader<WindowFocused>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::P)  {
+    if keyboard_input.just_pressed(KeyCode::KeyP)  {
         next_state.set(AppState::Paused);
     }
 
@@ -830,12 +828,12 @@ fn pause_system(
 }
 
 fn unpause_system(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut next_state: ResMut<NextState<AppState>>,
     // To unpause when the mouse is clicked
-    buttons: Res<Input<MouseButton>>, 
+    buttons: Res<ButtonInput<MouseButton>>, 
 ) {
-    if keyboard_input.just_pressed(KeyCode::P) || buttons.pressed(MouseButton::Left) {
+    if keyboard_input.just_pressed(KeyCode::KeyP) || buttons.pressed(MouseButton::Left) {
         next_state.set(AppState::Game);
     }
 }

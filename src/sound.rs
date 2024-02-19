@@ -23,15 +23,15 @@ pub fn play_gunshot(
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
 	// Required to delete previous sounds
-	higher: Query<(Entity, With<GunShotSound>)>,
-	lower: Query<(Entity, With<GunShotDeepSound>)>,
+	higher: Query<Entity, With<GunShotSound>>,
+	lower: Query<Entity, With<GunShotDeepSound>>,
 ) {
 	// Even though sounds automatically get despawned after their completion, multiple of the same sound playing
 	// at the same time can corrupt the sound. We therefore delete any previously played (but unfinished) sounds.
-	for (entity, _sound) in higher.iter() {
+	for entity in higher.iter() {
 		commands.entity(entity).despawn();
 	}
-	for (entity, _sound) in lower.iter() {
+	for entity in lower.iter() {
 		commands.entity(entity).despawn();
 	}
 
@@ -39,14 +39,14 @@ pub fn play_gunshot(
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("ShotsFired.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.5))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new(0.5))
 		},
 		GunShotSound,
 	));
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("ShotsFiredDeep.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.25))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new(0.25))
 		},
 		GunShotDeepSound,
 	));
@@ -57,15 +57,15 @@ pub fn play_tankhit(
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
 	// Required to delete previous sounds
-	higher: Query<(Entity, With<TankHitSound>)>,
-	lower: Query<(Entity, With<TankHitDeepSound>)>,
+	higher: Query<Entity, With<TankHitSound>>,
+	lower: Query<Entity, With<TankHitDeepSound>>,
 ) {
 	// Even though sounds automatically get despawned after their completion, multiple of the same sound playing
 	// at the same time can corrupt the sound. We therefore delete any previously played (but unfinished) sounds.
-	for (entity, _sound) in higher.iter() {
+	for entity in higher.iter() {
 		commands.entity(entity).despawn();
 	}
-	for (entity, _sound) in lower.iter() {
+	for entity in lower.iter() {
 		commands.entity(entity).despawn();
 	}
 
@@ -73,14 +73,14 @@ pub fn play_tankhit(
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("TankHit.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.5))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new(0.5))
 		},
 		TankHitSound,
 	));
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("TankHitDeep.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.25))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new(0.25))
 		},
 		TankHitDeepSound,
 	));
@@ -91,15 +91,15 @@ pub fn play_wallhit(
 	mut commands: Commands,
 	asset_server: Res<AssetServer>,
 	// Required to delete previous sounds
-	higher: Query<(Entity, With<WallHitSound>)>,
-	lower: Query<(Entity, With<WallHitDeepSound>)>,
+	higher: Query<Entity, With<WallHitSound>>,
+	lower: Query<Entity, With<WallHitDeepSound>>,
 ) {
 	// Even though sounds automatically get despawned after their completion, multiple of the same sound playing
 	// at the same time can corrupt the sound. We therefore delete any previously played (but unfinished) sounds.
-	for (entity, _sound) in higher.iter() {
+	for entity in higher.iter() {
 		commands.entity(entity).despawn();
 	}
-	for (entity, _sound) in lower.iter() {
+	for entity in lower.iter() {
 		commands.entity(entity).despawn();
 	}
 
@@ -107,14 +107,14 @@ pub fn play_wallhit(
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("WallHit.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.25))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new(0.25))
 		},
 		WallHitSound,
 	));
 	commands.spawn((
 		AudioBundle {
 			source: asset_server.load("WallHitDeep.ogg"),
-			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new_relative(0.125))
+			settings: PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::new(0.125))
 		},
 		WallHitDeepSound,
 	));

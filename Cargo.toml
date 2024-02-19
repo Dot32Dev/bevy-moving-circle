@@ -8,10 +8,10 @@ description = "A top-down game about moving a player"
 
 [dependencies]
 # bevy = { version = "0.7.0", features = ["dynamic"] }
-bevy = "0.12"
+bevy = "0.13"
 # bevy_prototype_lyon = "0.8.0"
-dot32_intro = { git = "https://github.com/Dot32IsCool/dot32-intro-rs", rev = "f81c0a8"}
-bevy_embedded_assets = "0.9"
+dot32_intro = { git = "https://github.com/Dot32IsCool/dot32-intro-rs", rev = "d5075f3"}
+bevy_embedded_assets = "0.10"
 rand = "0.8.5"
 # bevy-inspector-egui = "0.21"
 
