@@ -1,6 +1,7 @@
 // TODO: Fix bearing using a sprite bundle
 
 use bevy::prelude::*;
+use bevy::sprite::Mesh2dHandle;
 use crate::utils::Health;
 
 pub const TANK_SPEED: f32 = 2.0/3.0;
@@ -147,7 +148,7 @@ impl TankBundle<ColorMaterial> {
     ) -> TankBundle<ColorMaterial> {
         TankBundle {
             material_bundle: bevy::sprite::MaterialMesh2dBundle {
-                mesh: meshes.add(shape::Circle::new(TANK_SIZE)).into(),
+                mesh: Mesh2dHandle(meshes.add(Circle { radius: TANK_SIZE })),
                 material: materials.add(ColorMaterial::from(Color::BLACK)),
                 transform: Transform {
                     translation: Vec3::new(0.0, 0.0, 1.0),

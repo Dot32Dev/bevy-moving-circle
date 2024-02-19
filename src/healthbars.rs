@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::*;
+use bevy::sprite::Mesh2dHandle;
 use crate::utils::Health;
 
 pub const HEALTHBAR_Y_OFFSET: f32 = 40.0;
@@ -91,7 +92,7 @@ pub fn update_healthbar_sides(
                 Side::Left => transform.translation.x = -0.5,
             }
             // We update the circle's colour
-            let mut material = materials.get_mut(material_handle.id()).unwrap();
+            let material = materials.get_mut(material_handle.id()).unwrap();
             material.color = parent_sprite.color;
 		}
     }
@@ -235,7 +236,7 @@ impl HealthbarSideBundle<ColorMaterial> {
     ) -> HealthbarSideBundle<ColorMaterial> {
         HealthbarSideBundle {
             material_bundle: bevy::sprite::MaterialMesh2dBundle {
-                mesh: meshes.add(shape::Circle::new(0.5)).into(),
+                mesh: Mesh2dHandle(meshes.add(Circle { radius: 0.5 })),
                 material: materials.add(Color::NONE),
                 transform: Transform {
                     translation: Vec3::new(0.0, 0.0, 0.1),

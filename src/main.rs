@@ -11,7 +11,7 @@
 use bevy::{
     prelude::*, 
     window::*, 
-    sprite::MaterialMesh2dBundle,
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
     ecs::system::RunSystemOnce, render::camera::ScalingMode,
 };
 
@@ -88,6 +88,7 @@ fn main() {
 
     // Pause systems
     .add_systems(Update, (
+        update_healthbar_sides,
         unpause_system,
     ).run_if(in_state(AppState::Paused)))
 
@@ -258,7 +259,7 @@ fn create_player(
     .with_children(|parent| {
         parent.spawn((
             MaterialMesh2dBundle {
-                mesh: meshes.add(shape::Circle::new(16.0)).into(),
+                mesh: Mesh2dHandle(meshes.add(Circle { radius: 16.0 })),
                 material: materials.add(Color::rgb(0.35, 0.6, 0.99)),
                 transform: Transform::from_xyz(0.0, 0.0, 0.1),
                 ..Default::default()
@@ -297,7 +298,7 @@ fn create_enemy(
         .with_children(|parent| {
             parent.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(shape::Circle::new(16.0)).into(),
+                    mesh: Mesh2dHandle(meshes.add(Circle { radius: 16.0 })),
                     material: materials.add(Color::rgb(0.89, 0.56, 0.26)),
                     transform: Transform::from_xyz(0.0, 0.0, 0.1),
                     ..Default::default()
@@ -521,7 +522,7 @@ fn mouse_button_input( // Shoot bullets and rotate turret to point at mouse
 
                         commands.spawn((
                             MaterialMesh2dBundle {
-                                mesh: meshes.add(shape::Circle::new(BULLET_SIZE)).into(),
+                                mesh: Mesh2dHandle(meshes.add(Circle { radius: BULLET_SIZE })),
                                 material: materials.add(ColorMaterial::from(Color::BLACK)),
                                 transform: Transform::from_translation(Vec3::new(player.translation.x, player.translation.y, 0.0)),
                                 ..default()
@@ -601,7 +602,7 @@ fn ai_rotate( // Shoot bullets and rotate turret to point at mouse
                     }
                     commands.spawn((
                         MaterialMesh2dBundle {
-                            mesh: meshes.add(shape::Circle::new(BULLET_SIZE)).into(),
+                            mesh: Mesh2dHandle(meshes.add(Circle { radius: BULLET_SIZE })),
                             material: materials.add(ColorMaterial::from(Color::BLACK)),
                             transform: Transform::from_translation(Vec3::new(ai.translation.x, ai.translation.y, 0.0)),
                             ..default()
@@ -866,7 +867,7 @@ fn flash_yellow(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for (hit_timer, original_colour, material_handle, children) in tank.iter() {
-        let mut material = materials.get_mut(material_handle.id()).unwrap();
+        let material = materials.get_mut(material_handle.id()).unwrap();
 
         if hit_timer.0 < 1.0/15.0 {
             material.color = Color::rgb(1.0, 1.0, 0.0);
@@ -877,7 +878,7 @@ fn flash_yellow(
         // This isn't pretty, as any alteration to the tank's hierachy would break it
         for child in children.iter() {
             if let Ok((tank_child_children, original_colour, material_handle)) = tank_child_query.get_mut(*child) {
-                let mut material = materials.get_mut(material_handle.id()).unwrap();
+                let material = materials.get_mut(material_handle.id()).unwrap();
                 
                 if hit_timer.0 < 1.0/15.0 {
                     material.color = Color::rgb(1.0, 1.0, 0.0);
