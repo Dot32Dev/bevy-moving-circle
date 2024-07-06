@@ -85,6 +85,7 @@ fn main() {
                 pause_system,
                 update_hit_timer,
                 flash_yellow,
+                button_system,
             )
                 .run_if(in_state(AppState::Game)),
         )
@@ -106,10 +107,7 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    // asset_server: Res<AssetServer>,
-) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // commands.spawn(Camera2dBundle::default());
     commands.spawn((
         Camera2dBundle {
@@ -149,118 +147,86 @@ fn setup(
         })
         .insert(Name::new("Background"));
 
-    // commands
-    //     .spawn(NodeBundle {
-    //         style: Style {
-    //             width: Val::Percent(100.0),
-    //             height: Val::Percent(100.0),
-    //             align_items: AlignItems::Center,
-    //             justify_content: JustifyContent::Center,
-    //             ..default()
-    //         },
-    //         ..default()
-    //     })
-    //     .with_children(|parent| {
-    //         parent
-    //             .spawn(ButtonBundle {
-    //                 style: Style {
-    //                     width: Val::Px(150.0),
-    //                     height: Val::Px(65.0),
-    //                     border: UiRect::all(Val::Px(5.0)),
-    //                     // horizontally center child text
-    //                     justify_content: JustifyContent::Center,
-    //                     // vertically center child text
-    //                     align_items: AlignItems::Center,
-    //                     ..default()
-    //                 },
-    //                 border_color: BorderColor(Color::BLACK),
-    //                 border_radius: BorderRadius::MAX,
-    //                 background_color: NORMAL_BUTTON.into(),
-    //                 ..default()
-    //             })
-    //             .with_children(|parent| {
-    //                 parent.spawn(TextBundle::from_section(
-    //                     "Button",
-    //                     TextStyle {
-    //                         font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-    //                         font_size: 40.0,
-    //                         color: Color::srgb(0.9, 0.9, 0.9),
-    //                     },
-    //                 ));
-    //             });
-    //     });
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(10.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                column_gap: Val::Px(10.0),
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(120.0),
+                            height: Val::Px(40.0),
+                            border: UiRect::all(Val::Px(1.0)),
+                            // horizontally center child text
+                            justify_content: JustifyContent::Center,
+                            // vertically center child text
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        border_color: BorderColor(Color::WHITE),
+                        border_radius: BorderRadius::MAX,
+                        background_color: Color::srgb(0., 0., 0.).into(),
+                        ..default()
+                    },
+                    Name::new("Spawn player button"),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Spawn Player",
+                        TextStyle {
+                            font: asset_server
+                                .load("fonts/PT_Sans/PTSans-Regular.ttf"),
+                            font_size: 20.0,
+                            color: Color::srgb(0.9, 0.9, 0.9),
+                        },
+                    ));
+                });
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Val::Px(120.0),
+                            height: Val::Px(40.0),
+                            border: UiRect::all(Val::Px(1.0)),
+                            // horizontally center child text
+                            justify_content: JustifyContent::Center,
+                            // vertically center child text
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        border_color: BorderColor(Color::WHITE),
+                        border_radius: BorderRadius::MAX,
+                        background_color: Color::srgb(0., 0., 0.).into(),
+                        ..default()
+                    },
+                    Name::new("Spawn AI button"),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Spawn AI",
+                        TextStyle {
+                            font: asset_server
+                                .load("fonts/PT_Sans/PTSans-Regular.ttf"),
+                            font_size: 20.0,
+                            color: Color::srgb(0.9, 0.9, 0.9),
+                        },
+                    ));
+                });
+        });
 
-    // commands.spawn_bundle(ButtonBundle {
-    //     style: Style {
-    //         size: Size::new(Val::Px(200.0), Val::Px(45.0)),
-    //         // center button
-    //         margin: Rect::all(Val::Px(20.0)),
-    //         // horizontally center child text
-    //         justify_content: JustifyContent::Center,
-    //         // vertically center child text
-    //         align_items: AlignItems::Center,
-    //         ..default()
-    //     },
-    //     color: Color::ORANGE_RED.into(),
-    //     ..default()
-    // })
-    // .insert(Name::new("Spawn player button"))
-    // .with_children(|parent| {
-    //     parent.spawn_bundle(TextBundle {
-    //         text: Text::with_section(
-    //             "Spawn Player",
-    //             TextStyle {
-    //                 font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
-    //                 font_size: 40.0,
-    //                 color: Color::srgb(0.9, 0.9, 0.9),
-    //             },
-    //             Default::default(),
-    //         ),
-    //         ..default()
-    //     });
-    // });
-    // commands.spawn_bundle(ButtonBundle {
-    //     style: Style {
-    //         size: Size::new(Val::Px(150.0), Val::Px(45.0)),
-    //         // center button
-    //         margin: Rect::all(Val::Px(20.0)),
-    //         // horizontally center child text
-    //         justify_content: JustifyContent::Center,
-    //         // vertically center child text
-    //         align_items: AlignItems::Center,
-    //         ..default()
-    //     },
-    //     color: Color::ORANGE_RED.into(),
-    //     ..default()
-    // })
-    // .insert(Name::new("Spawn AI button"))
-    // .with_children(|parent| {
-    //     parent.spawn_bundle(TextBundle {
-    //         text: Text::with_section(
-    //             "Spawn AI",
-    //             TextStyle {
-    //                 font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
-    //                 font_size: 40.0,
-    //                 color: Color::srgb(0.9, 0.9, 0.9),
-    //             },
-    //             Default::default(),
-    //         ),
-    //         ..default()
-    //     });
-    // });
-
-    // commands.spawn_bundle(TextBundle {
-    //     text: Text::with_section(
-    //         "Kills: 0",
-    //         TextStyle {
-    //             font: asset_server.load("fonts/PT_Sans/PTSans-Regular.ttf"),
-    //             font_size: 40.0,
-    //             color: Color::srgb(0.9, 0.9, 0.9),
-    //         },
-    //         Default::default(),
-    //     ),
-    //     ..default()
-    // }).insert(KillsText);
+    commands.add(|world: &mut World| {
+        world.run_system_once(create_enemy);
+    })
 }
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
@@ -358,62 +324,57 @@ fn create_enemy(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for _ in 0..2 {
-        commands
-            .spawn(TankBundle::new(&mut meshes, &mut materials, 4)) // "4" is the amount of health we spawn the tank with
-            .insert(AiBundle::new())
-            .insert(Name::new("Enemy"))
-            .with_children(|parent| {
-                parent
-                    .spawn((
-                        MaterialMesh2dBundle {
-                            mesh: Mesh2dHandle(
-                                meshes.add(Circle { radius: 16.0 }),
-                            ),
-                            material: materials
-                                .add(Color::srgb(0.89, 0.56, 0.26)),
-                            transform: Transform::from_xyz(0.0, 0.0, 0.1),
-                            ..Default::default()
-                        },
-                        OriginalColour(Color::srgb(0.89, 0.56, 0.26)),
-                    ))
-                    .with_children(|parent| {
-                        parent.spawn(BearingBundle::new()).with_children(
-                            |parent| {
-                                parent.spawn(TurretBundle::new());
-                            },
-                        );
-                    });
-                parent
-                    .spawn(HealthbarBundle::new(4)) // "4" is the max health
-                    .with_children(|parent| {
-                        parent.spawn(HealthbarSideBundle::new(
-                            &mut meshes,
-                            &mut materials,
-                            Side::Left,
-                        ));
-                        parent.spawn(HealthbarSideBundle::new(
-                            &mut meshes,
-                            &mut materials,
-                            Side::Right,
-                        ));
-                    });
-                parent.spawn(HealthbarBorderBundle::new()).with_children(
-                    |parent| {
-                        parent.spawn(HealthbarSideBundle::new(
-                            &mut meshes,
-                            &mut materials,
-                            Side::Left,
-                        ));
-                        parent.spawn(HealthbarSideBundle::new(
-                            &mut meshes,
-                            &mut materials,
-                            Side::Right,
-                        ));
+    commands
+        .spawn(TankBundle::new(&mut meshes, &mut materials, 4)) // "4" is the amount of health we spawn the tank with
+        .insert(AiBundle::new())
+        .insert(Name::new("Enemy"))
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    MaterialMesh2dBundle {
+                        mesh: Mesh2dHandle(meshes.add(Circle { radius: 16.0 })),
+                        material: materials.add(Color::srgb(0.89, 0.56, 0.26)),
+                        transform: Transform::from_xyz(0.0, 0.0, 0.1),
+                        ..Default::default()
                     },
-                );
-            });
-    }
+                    OriginalColour(Color::srgb(0.89, 0.56, 0.26)),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(BearingBundle::new()).with_children(
+                        |parent| {
+                            parent.spawn(TurretBundle::new());
+                        },
+                    );
+                });
+            parent
+                .spawn(HealthbarBundle::new(4)) // "4" is the max health
+                .with_children(|parent| {
+                    parent.spawn(HealthbarSideBundle::new(
+                        &mut meshes,
+                        &mut materials,
+                        Side::Left,
+                    ));
+                    parent.spawn(HealthbarSideBundle::new(
+                        &mut meshes,
+                        &mut materials,
+                        Side::Right,
+                    ));
+                });
+            parent.spawn(HealthbarBorderBundle::new()).with_children(
+                |parent| {
+                    parent.spawn(HealthbarSideBundle::new(
+                        &mut meshes,
+                        &mut materials,
+                        Side::Left,
+                    ));
+                    parent.spawn(HealthbarSideBundle::new(
+                        &mut meshes,
+                        &mut materials,
+                        Side::Right,
+                    ));
+                },
+            );
+        });
 }
 
 fn movement(
@@ -1015,6 +976,54 @@ fn kill_bullets(
 //         window_params.enabled = !window_params.enabled
 //     }
 // }
+
+fn button_system(
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &Children),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut commands: Commands,
+    active_ai: Query<&mut Active>,
+    text_query: Query<&mut Text>,
+    mut windows: Query<&mut Window>,
+) {
+    for (interaction, mut color, children) in &mut interaction_query {
+        let text = text_query.get(children[0]).unwrap();
+        match *interaction {
+            Interaction::Pressed => {
+                if text.sections[0].value == "Spawn Player".to_string() {
+                    let mut no_players = false;
+                    for active in active_ai.iter() {
+                        // If an AI is innactive, then there must be no players
+                        if !active.value {
+                            no_players = true;
+                        }
+                    }
+                    if no_players {
+                        commands.add(|world: &mut World| {
+                            world.run_system_once(create_player);
+                        })
+                    }
+                }
+                if text.sections[0].value == "Spawn AI".to_string() {
+                    commands.add(|world: &mut World| {
+                        world.run_system_once(create_enemy);
+                    })
+                }
+            }
+            Interaction::Hovered => {
+                *color = Color::srgb(0.2, 0.2, 0.2).into();
+                let mut window = windows.single_mut();
+                window.cursor.icon = CursorIcon::Pointer;
+            }
+            Interaction::None => {
+                *color = Color::BLACK.into();
+                let mut window = windows.single_mut();
+                window.cursor.icon = CursorIcon::Default;
+            }
+        }
+    }
+}
 
 // fn button_system(
 //     mut interaction_query: Query<(&Interaction, &mut UiColor, &Children), (Changed<Interaction>, With<Button>),>,
