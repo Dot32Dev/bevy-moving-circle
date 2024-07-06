@@ -1,11 +1,11 @@
 // TODO: Fix bearing using a sprite bundle
 
+use crate::utils::Health;
 use bevy::prelude::*;
 use bevy::sprite::Mesh2dHandle;
-use crate::utils::Health;
 
-pub const TANK_SPEED: f32 = 2.0/3.0;
-pub const TANK_SIZE: f32 = 20.0; 
+pub const TANK_SPEED: f32 = 2.0 / 3.0;
+pub const TANK_SIZE: f32 = 20.0;
 const TURRET_SIZE: f32 = 16.0;
 
 #[derive(Component)]
@@ -29,7 +29,7 @@ pub struct Active {
     pub value: bool,
 }
 
-// Time since last shot fired 
+// Time since last shot fired
 #[derive(Component)]
 pub struct AttackTimer {
     pub value: f32,
@@ -123,18 +123,18 @@ impl TurretBundle {
         TurretBundle {
             sprite_bundle: SpriteBundle {
                 sprite: Sprite {
-                    color: Color::rgb(0., 0., 0.),
+                    color: Color::srgb(0., 0., 0.),
                     ..default()
                 },
                 transform: Transform {
                     scale: Vec3::new(TURRET_SIZE, TURRET_SIZE, 0.),
-                    translation: Vec3::new(TANK_SIZE+4.0, 0.0, -1.0), // The "TANK_SIZE+4.0" is reset every frame due to a system anyway
+                    translation: Vec3::new(TANK_SIZE + 4.0, 0.0, -1.0), // The "TANK_SIZE+4.0" is reset every frame due to a system anyway
                     ..default()
                 },
                 ..default()
             },
             turret: Turret,
-            original_color: OriginalColour(Color::BLACK)
+            original_color: OriginalColour(Color::BLACK),
         }
     }
 }
@@ -157,17 +157,13 @@ impl TankBundle<ColorMaterial> {
                 ..default()
             },
             tank: Tank,
-            attack_timer: AttackTimer {
-                value: 0.0,
-            },
+            attack_timer: AttackTimer { value: 0.0 },
             hit_timer: HitTimer(1.0),
-            health: Health {
-                value: health,
-            },
+            health: Health { value: health },
             velocity: Velocity {
                 value: Vec2::new(0.0, 0.0),
             },
-            original_colour: OriginalColour(Color::BLACK)
+            original_colour: OriginalColour(Color::BLACK),
         }
     }
 }
@@ -176,15 +172,9 @@ impl TankBundle<ColorMaterial> {
 impl AiBundle {
     pub fn new() -> AiBundle {
         AiBundle {
-            active: Active {
-                value: true,
-            },
-            steps: Steps {
-                value: 0.0,
-            },
-            direction_ai: DirectionAi {
-                value: 0,
-            },
+            active: Active { value: true },
+            steps: Steps { value: 0.0 },
+            direction_ai: DirectionAi { value: 0 },
             ai: Ai,
         }
     }
